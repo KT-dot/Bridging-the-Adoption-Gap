@@ -1,0 +1,308 @@
+schema_version: 1
+projects:
+  in-bhashini-ulca:
+    project_name: ULCA – Universal Language Contribution API platform (BHASHINI data
+      & model repository)
+    classification_labels: null
+    project_type: data_portal
+    country: India
+    government_level: union
+    operator: Digital India Bhashini Division (DIBD), Digital India Corporation, Ministry
+      of Electronics & Information Technology
+    service_sector: language data
+    intended_audience: researchers, developers and data/model contributors (documented
+      in README); public browsing of datasets, models and benchmarks
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit unknown.
+      evidence_url: https://www.tarento.com/case-studies/tarento-joins-ekstep-to-build-the-pillar-for-national-language-translation-mission-via-ulca-platform/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public model/dataset dashboard rendered; count zero observed.
+      Contribution sections require login. Read-only browser blocks POST requests;
+      no contribution attempted. Observation limitations: Deployment host is ulcacontrib.org
+      (not gov.in); operator attribution relies on the official bhashini.gov.in link.
+      GitHub org ownership not independently verified. The README still points to
+      bhashini.gov.in/ulca, which now serves the generic Bhashini shell. Licence copyright
+      line reads ''ULCA (Project Sunbird)'' but ULCA is not one of the Sunbird ED/RC/cQube
+      codebases. Latest dashboard rendered 611 characters; root URL intermittently
+      blank. Data loading and screenshot capture incomplete. This is a specialist
+      public explorer, not a benefits interface. Classification unknown unless a sourced
+      label is supplied. Observed UI languages are in the inventory; they do not establish
+      expected languages.'
+  in-cmd-koha:
+    project_name: Centre for Management Development Kerala library catalogue (Koha)
+    classification_labels: null
+    project_type: service_ui
+    country: India
+    government_level: state_ut
+    operator: Centre for Management Development, autonomous institution under Government
+      of Kerala
+    service_sector: education and research
+    intended_audience: CMD library members and public catalogue visitors; membership/borrowing
+      rules on official library page
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit and local
+        customisations unknown.
+      evidence_url: https://cmd.kerala.gov.in/library/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Catalogue search and records public; member accounts/renewals
+      require login. Observation limitations: Specialist public library catalogue
+      rather than a broad transactional service. Koha mirror is official upstream;
+      local theme/version unknown. Classification unknown unless a sourced label is
+      supplied. Observed UI languages are in the inventory; they do not establish
+      expected languages.'
+  in-haryana-wordpress:
+    project_name: Haryana state portal (WordPress through NIC S3WaaS)
+    classification_labels: null
+    project_type: public_information_site
+    country: India
+    government_level: state_ut
+    operator: Government of Haryana; NIC S3WaaS hosting/development
+    service_sector: general government information
+    intended_audience: null
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit and local
+        customisations unknown.
+      evidence_url: https://haryanait.gov.in/s3waas/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public information pages; outbound transactional portals are separate
+      applications and not attributed to WordPress. Observation limitations: Documentary
+      chain establishes upstream CMS only; government theme/plugins are not identified
+      as publicly licensed. No S3WaaS fork counted separately. English page with Hindi
+      header/menu option; translated pages not visited. Classification unknown unless
+      a sourced label is supplied. Observed UI languages are in the inventory; they
+      do not establish expected languages.'
+  in-icar-ojs:
+    project_name: The Indian Journal of Agricultural Sciences (ICAR Open Journal Systems)
+    classification_labels: null
+    project_type: service_ui
+    country: India
+    government_level: union
+    operator: Indian Council of Agricultural Research, autonomous organisation under
+      DARE, Ministry of Agriculture and Farmers Welfare
+    service_sector: agriculture and research publishing
+    intended_audience: Agricultural researchers, journal authors and readers; public
+      articles
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit and local
+        customisations unknown.
+      evidence_url: https://epubs.icar.org.in/index.php/IJAgS/about/aboutThisPublishingSystem
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Journal issues, article abstracts and reading pages public; author/reviewer
+      submission workflows require accounts. Observation limitations: Specific ICAR-operated
+      journal selected; other society journals hosted on the portal not counted. Upstream
+      current release may differ from deployed 3.4.0.11. Government About Us ownership
+      source opened through web browsing tool; direct Python fetch failed with an
+      expired-certificate error. Journal deployment itself returned 200 and rendered
+      in Chromium. Classification unknown unless a sourced label is supplied. Observed
+      UI languages are in the inventory; they do not establish expected languages.'
+  in-iitm-moodle:
+    project_name: IIT Madras institute course portal (Moodle)
+    classification_labels: null
+    project_type: service_ui
+    country: India
+    government_level: union
+    operator: Indian Institute of Technology Madras, autonomous statutory public institute
+    service_sector: education and research
+    intended_audience: IIT Madras students and teachers; public course listings observed
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit and local
+        customisations unknown.
+      evidence_url: https://cc.iitm.ac.in/links/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Course catalogue and announcements public; enrolment and course
+      activities require login. Observation limitations: Autonomous public institution
+      included in government scope, not a ministry department. Course catalogue observable;
+      learning content/journeys behind accounts not tested. Official administration
+      ownership page opened through web browsing tool; direct fetch was redirected
+      to an access-denied route. Moodle service itself returned 200 and rendered in
+      Chromium. Classification unknown unless a sourced label is supplied. Observed
+      UI languages are in the inventory; they do not establish expected languages.'
+  in-incois-erddap:
+    project_name: INCOIS ERDDAP ocean data server (Indian National Centre for Ocean
+      Information Services)
+    classification_labels: null
+    project_type: data_portal
+    country: India
+    government_level: union
+    operator: Indian National Centre for Ocean Information Services (INCOIS), autonomous
+      body under the Ministry of Earth Sciences
+    service_sector: ocean and environment data
+    intended_audience: researchers and the public (ERDDAP pages for human browsing
+      plus RESTful services); unknown beyond that
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Site footer self-reports ERDDAP 2.30.0;
+        no operator-certified deployed commit or build provenance. Previously checked
+        upstream release v2.30.0 is not proof of byte-for-byte deployment equivalence.
+      evidence_url: https://incois.gov.in/site/index.jsp
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public dataset discovery and download/graph forms; no login attempted.
+      Default Python TLS validation failed; Chromium with certificate checking enabled
+      rendered the interface. Observation limitations: Generic open-source scientific
+      data server (comparable to CKAN-type data-portal families) rather than an India-specific
+      codebase. The incomplete TLS chain may break automated audit tools that do not
+      fetch AIA intermediates. The ODIS catalogue recorded this server as offline
+      in Oct 2025, so availability may vary. Languages other than en are ERDDAP''s
+      automatic translations; hi and bn are among ~35 listed options. Classification
+      unknown unless a sourced label is supplied. Observed UI languages are in the
+      inventory; they do not establish expected languages.'
+  in-inflibnet-ir-dspace:
+    project_name: IR@INFLIBNET institutional repository (INFLIBNET Centre, UGC)
+    classification_labels: null
+    project_type: service_ui
+    country: India
+    government_level: union
+    operator: Information and Library Network (INFLIBNET) Centre, Gandhinagar — autonomous
+      Inter-University Centre of the University Grants Commission (Ministry of Education)
+    service_sector: education and research
+    intended_audience: null
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Deployment HTML carries <meta name=Generator
+        content='DSpace 9.1'> and the Angular UI (dspace-angular) footer credits DSpace/LYRASIS
+        — software self-report/fingerprint only, not an operator statement of version.
+      evidence_url: https://www.inflibnet.ac.in/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: public browse/search/item pages; login only for depositors/administrators
+      Observation limitations: DSpace is used by many Indian public institutions;
+      only one primary entry per family is kept. Language switcher is DSpace''s default
+      translation set, not an INFLIBNET localisation claim. Non-English research item
+      titles and language menu labels do not establish observed translated UI pages.
+      Classification unknown unless a sourced label is supplied. Observed UI languages
+      are in the inventory; they do not establish expected languages.'
+  in-mospi-microdata:
+    project_name: MoSPI Microdata Portal (NSO microdata catalogue, NADA)
+    classification_labels: null
+    project_type: data_portal
+    country: India
+    government_level: union
+    operator: National Statistics Office, Ministry of Statistics and Programme Implementation
+      (MoSPI), Government of India
+    service_sector: official statistics
+    intended_audience: researchers, policymakers and the public (documented on portal
+      home page)
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Footer self-reports NADA 5.4; exact patch,
+        commit and deployment build provenance unknown.
+      evidence_url: https://microdata.gov.in/NADA/index.php/home
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public catalogue and study descriptions; data downloads require
+      registration. Default Python TLS validation failed; Chromium with certificate
+      checking enabled rendered the catalogue. Observation limitations: Only Indian
+      government NADA deployment found; html lang attribute absent; data downloads
+      behind registration. Classification unknown unless a sourced label is supplied.
+      Observed UI languages are in the inventory; they do not establish expected languages.'
+  in-peso-drupal:
+    project_name: Petroleum and Explosives Safety Organisation public website (Drupal)
+    classification_labels: null
+    project_type: public_information_site
+    country: India
+    government_level: union
+    operator: Petroleum and Explosives Safety Organisation, DPIIT, Ministry of Commerce
+      and Industry, Government of India
+    service_sector: industrial safety and regulatory information
+    intended_audience: Public visitors and regulated-industry stakeholders; site names
+      licensees/stakeholders
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Exact deployed version/commit and local
+        customisations unknown.
+      evidence_url: https://www.peso.gov.in/web/en/website-policy
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public regulatory information; linked license-application portals
+      are separately operated interfaces and not attributed to Drupal. Observation
+      limitations: Upstream Drupal CMS accepted; custom WES-developed theme and external
+      online licensing applications have no established repository linkage. Hindi
+      header/switch seen on English page; translated Hindi pages not visited. Classification
+      unknown unless a sourced label is supplied. Observed UI languages are in the
+      inventory; they do not establish expected languages.'
+  in-tifr-indico:
+    project_name: TIFR Scientific Talks public lecture listing (Indico)
+    classification_labels: null
+    project_type: service_ui
+    country: India
+    government_level: union
+    operator: Tata Institute of Fundamental Research, aided institution under Department
+      of Atomic Energy
+    service_sector: science and public events
+    intended_audience: Public lecture visitors and scientific event participants (named
+      categories)
+    expected_languages: null
+    critical_journeys: null
+    deployment_repository_relationship:
+      status: supplied
+      detail: upstream_relationship_only; Site footer self-reports Indico v3.3.3;
+        no deployment build/commit equivalence verified.
+      evidence_url: https://scitalks.tifr.res.in/
+      deployed_version: null
+    auth: null
+    offline_relevant: null
+    long_process: null
+    untranslated_allowlist: null
+    notes: 'Access: Public lecture/category pages independently accessible through
+      GET and web browsing; event creation/login not used. Observation limitations:
+      Public HTML and web browsing tool accessible, but Chromium body-text capture
+      repeatedly timed out; runtime audit may need manual assistance. DAE-aided institution
+      included with review flag. Classification unknown unless a sourced label is
+      supplied. Observed UI languages are in the inventory; they do not establish
+      expected languages.'

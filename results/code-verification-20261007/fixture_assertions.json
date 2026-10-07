@@ -1,0 +1,61 @@
+[
+  {
+    "fixture": "working",
+    "feature_id": "LANG-02",
+    "field": "verification",
+    "expected": "pass"
+  },
+  {
+    "fixture": "working",
+    "feature_id": "LANG-05",
+    "field": "verification",
+    "expected": "pass"
+  },
+  {
+    "fixture": "partial",
+    "feature_id": "LANG-01",
+    "field": "availability",
+    "expected": "present"
+  },
+  {
+    "fixture": "partial",
+    "feature_id": "LANG-02",
+    "field": "verification",
+    "expected": "fail"
+  },
+  {
+    "fixture": "contrast",
+    "feature_id": "VIS-01",
+    "field": "verification",
+    "expected": "fail"
+  },
+  {
+    "fixture": "contrast",
+    "feature_id": "VIS-04",
+    "field": "verification",
+    "expected": "fail"
+  },
+  {
+    "fixture": "forms",
+    "feature_id": "FORM-05",
+    "field": "verification",
+    "expected": "fail"
+  },
+  {
+    "fixture": "robots",
+    "feature_id": "VIS-01",
+    "field": "availability",
+    "expected": "unknown"
+  },
+  {
+    "fixture": "robots",
+    "feature_id": "VIS-01",
+    "field": "verification",
+    "expected": "not_tested"
+  },
+  {
+    "fixture": "robots",
+    "field": "runtime_status",
+    "expected": "blocked"
+  }
+]

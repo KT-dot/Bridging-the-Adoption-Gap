@@ -1,0 +1,9 @@
+{
+ "welcome": {
+  "title": "Welcome to the service",
+  "body": "Apply for certificates online"
+ },
+ "button": {
+  "apply": "Apply now"
+ }
+}

@@ -1,0 +1,1846 @@
+# DPI/DPG inclusive-interface codebook.
+#
+# Stable feature IDs (never reuse or renumber). Each feature separates AVAILABILITY
+# (is the mechanism / subject present within the inspected scope?) from VERIFICATION
+# (did an explicit test succeed in the stated scope?). Decision rules below are
+# implemented in src/dpi_audit/rules/ and are the only basis for labels.
+#
+# Freeze procedure: run a small pilot, revise, then `dpi-audit codebook freeze`
+# (writes codebook/codebook.lock.json with the content hash). Any later rule change
+# requires a version bump and re-running all affected projects before comparisons.
+
+codebook:
+  id: dpi-inclusive-interface-codebook
+  version: "1.0.0"
+  status: draft            # draft | frozen  (see codebook.lock.json once frozen)
+  frozen_at: null
+  wcag_reference:
+    title: "Web Content Accessibility Guidelines (WCAG) 2.2, W3C Recommendation 12 December 2024"
+    url: "https://www.w3.org/TR/WCAG22/"
+    snapshot: "src/dpi_audit/data/wcag22_sc.json"
+  axe_reference:
+    package: "axe-core"
+    version: "4.14.0"
+    snapshot: "src/dpi_audit/data/axe_rules.json"
+  interpretation: >-
+    Labels describe potential interface barriers observed within a documented scope. They do
+    not establish WCAG conformance, screen-reader compatibility, ease of navigation, adoption,
+    user satisfaction, or causal effects. A WCAG mapping means the automated check is RELATED
+    to (and usually covers only part of) the criterion. An axe rule without violations does
+    not show that the criterion is met.
+
+vocabularies:
+  availability:
+    present: direct evidence of implementation or user-facing presence within the inspected scope
+    not_found_in_scope: not observed within the documented inspected scope (absence is NOT proven)
+    unknown: insufficient access or evidence to decide
+    not_applicable: the feature's applicability conditions do not hold
+  verification:
+    pass: the explicit test succeeded for every tested applicable unit in the stated scope
+    partial: observed behaviour is mixed across tested applicable units (or a unit test is mixed)
+    fail: the explicit applicable test failed
+    not_tested: the behaviour was not tested (including when a human-judgement test is required)
+  evidence_grade:
+    direct_observation: observed in the rendered interface (DOM, computed style, pixels, network)
+    static_indication: parsed source code/templates/resources indicate implementation
+    heuristic_inference: keyword/pattern/proxy inference; candidate only
+    human_validation: recorded by a human reviewer (manual_review.csv)
+  label:
+    wcag_related: check related to an exact WCAG 2.2 success criterion
+    ux_research_indicator: broader inclusive-UX research indicator, not a WCAG requirement
+  requirement_level:
+    universal_check: applies to every web UI with the relevant subject (e.g. text, images)
+    conditional_check: applies only when the applicability condition holds
+    conditional_indicator: optional design feature; absence is not a barrier by itself
+    descriptive: descriptive measurement only; no requirement implied
+  availability_semantics:
+    implementation: "present = the mechanism is implemented/visible (e.g. a switcher, labels)"
+    subject_presence: "present = the subject the check applies to exists and was assessed (verification-only features; availability % is not a prevalence measure)"
+  aggregation:
+    any_present: availability present if any applicable unit is present (method recorded)
+    mixed_is_partial: all tested units pass -> pass; all fail -> fail; otherwise partial
+    any_fail_is_fail: any tested unit fails -> fail; all pass -> pass; otherwise partial
+    rollup_service_first: project-level runtime label uses deployed service/public-information/data-portal interfaces when supplied; informational/documentation sites never substitute for them
+    rollup_any_web: project-level label may come from any supplied web interface (e.g. accessibility statement on an informational site), with the interface recorded
+
+categories:
+  LANG: Language and localization
+  NAV: Navigation and discoverability
+  KBD: Keyboard and assistive access
+  VIS: Visual accessibility and responsive behaviour
+  FORM: Forms, cognitive usability, and recovery
+  RES: Resource constraints
+  TRUST: Trust, transparency and assistance
+
+defaults: &defaults
+  min_coverage: {runtime_pages: 1}
+  aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_service_first}
+  universal_requirement: false
+
+features:
+
+  # ------------------------------------------------------------------ LANGUAGE
+  - id: LANG-01
+    name: User-facing language switcher
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: A visible control that lets users choose among interface languages (select, link list, or menu whose options name languages or carry hreflang/lang).
+    barrier: Users who do not read the default language cannot reach content in a language they understand.
+    applicability:
+      condition: Web UI rendered. Relevance is established only when metadata expected_languages lists two or more languages; otherwise the result is descriptive.
+      not_applicable_when: Project declared non-web (api_only, backend_only, library, cli, mobile_app, desktop_app, other_non_web).
+    detectors:
+      static: [{id: st.lang_switcher, status: implemented, note: "parsed templates/JSX for selects/links with language options or hreflang; locale-change calls (changeLanguage, setLocale, set_language); regex call hits are heuristic"}]
+      runtime: [{id: rt.lang_switch, status: implemented, note: "visible select/link/button candidates whose options are language names/endonyms (Babel CLDR), codes, hreflang or lang attributes"}]
+    decision_rules:
+      availability:
+        present: Runtime - at least one visible candidate control with >=2 language options on a sampled page; or Static - parsed template element or locale-change call that is wired to a UI control.
+        not_found_in_scope: No candidate on any rendered sampled page (runtime) and no static indication in inspected first-party source.
+        unknown: No page rendered and no source inspected (blocked, failed, or not supplied).
+        not_applicable: Declared non-web project.
+      verification:
+        pass: n/a for this feature (functioning is LANG-02); verification is always not_tested here.
+        not_tested: Always.
+    evidence_required: [page URL, selector, option labels, DOM excerpt; or source path and line range]
+    automation_limitations: An icon-only control whose options appear only after a non-standard interaction may be missed; language links that leave the sampled host are recorded but not followed beyond one hop.
+    manual_review: {required: false, instructions: "Confirm the control is perceivable and labelled in a language users can recognise (endonyms)."}
+    wcag: []
+    absence_interpretation: Absence is not a barrier by itself; interpret with expected_languages metadata.
+    <<: *defaults
+
+  - id: LANG-02
+    name: Language switch changes interface content
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Activating a language option changes visible interface text and the page language metadata to the chosen language.
+    barrier: A switcher that changes only a few labels, or nothing, leaves users unable to use the service in their language.
+    applicability:
+      condition: LANG-01 present at runtime with an option for a language different from the current page language.
+      not_applicable_when: No runtime switcher candidate was found (then availability is not_found_in_scope, not not_applicable) — not_applicable only for declared non-web projects.
+    detectors:
+      runtime: [{id: rt.lang_switch, status: implemented, note: "baseline vs. after-switch visible text segments, html lang, title, URL"}]
+    decision_rules:
+      availability:
+        present: A switch was attempted and produced any observable change (text, html lang, or URL).
+        not_found_in_scope: A switch was attempted and nothing changed, or no switcher was found.
+        unknown: Switch could not be attempted (render failed, control not operable by automation).
+      verification:
+        pass: share of changed visible text segments >= thresholds.lang_switch_min_changed_ratio AND the html lang attribute changed to a tag whose primary subtag matches the chosen option (script dominance alone does not satisfy this metadata condition).
+        partial: exactly one of the two conditions holds.
+        fail: neither holds after a successful activation.
+        not_tested: no switch attempted.
+    evidence_required: [before/after text samples, html lang before/after, option chosen, screenshots]
+    automation_limitations: Text-change ratio is a proxy; translation quality and completeness require human review. Switchers that navigate to a different host are followed once.
+    manual_review: {required: true, instructions: "Check that the switched page is meaningfully usable in the chosen language (not machine-garbled, not partially switched in critical areas)."}
+    wcag: [{sc: "3.1.1", relation: related, note: "the html lang must follow the switched language"}]
+    <<: *defaults
+
+  - id: LANG-03
+    name: Language choice persists across navigation and reload
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: After switching language, following an internal link and reloading keep the chosen language.
+    barrier: Losing the chosen language on every page forces repeated switching and abandonment.
+    applicability:
+      condition: LANG-02 switch succeeded (verification pass or partial).
+      not_applicable_when: Declared non-web project.
+    detectors:
+      runtime: [{id: rt.lang_switch, status: implemented, note: "after switch: click first internal nav link, then reload; compare html lang and dominant script/stopwords"}]
+    decision_rules:
+      availability:
+        present: Persistence mechanism observed (language retained after navigation or reload).
+        not_found_in_scope: Language reverted after both navigation and reload.
+        unknown: Switch failed or persistence steps could not run.
+      verification:
+        pass: language retained after BOTH navigation and reload.
+        partial: retained after exactly one.
+        fail: reverted after both.
+        not_tested: persistence steps not run.
+    evidence_required: [URLs visited, html lang and text sample at each step]
+    automation_limitations: Uses a fresh browser context without prior cookies; per-account language preferences are not tested.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: LANG-04
+    name: Observed interface languages
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: implementation
+    definition: Languages observed in the interface (declared lang values, switcher options, dominant scripts) and locales shipped in source resources (claimed, not observed).
+    barrier: Descriptive context for language barriers.
+    applicability:
+      condition: Web UI rendered or source inspected.
+      not_applicable_when: Declared non-web project with no translation resources.
+    detectors:
+      static: [{id: st.i18n_resources, status: implemented, note: "locale codes of translation resources (claimed only)"}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "html/element lang values, switcher options, Unicode script shares"}]
+    decision_rules:
+      availability:
+        present: Two or more distinct languages observed at runtime (or, static-only, two or more locales in used translation resources).
+        not_found_in_scope: Exactly one language observed.
+        unknown: No rendered page and no resources inspected.
+      verification:
+        not_tested: Always (descriptive measurement; counts are in measurements).
+    evidence_required: [list of language tags with source of each observation]
+    automation_limitations: Script detection cannot distinguish languages sharing a script beyond a small stopword proxy.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: LANG-05
+    name: Translation resources used and their coverage
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: implementation
+    definition: First-party translation resources exist AND are referenced by application code; per-locale key coverage relative to the base locale.
+    barrier: Unused or incomplete translation files suggest localisation that users never see.
+    applicability:
+      condition: Source repository inspected.
+      not_applicable_when: No repository supplied (then availability unknown, not not_applicable). not_applicable only for declared non-web projects without resources.
+    detectors:
+      static: [{id: st.i18n_resources, status: implemented, note: "JSON/YAML/PO/properties/ARB/XLIFF/Android strings/iOS .strings/Fluent; key usage search in first-party code"}]
+    decision_rules:
+      availability:
+        present: Translation resources found AND (keys referenced in first-party code OR an i18n loader/initialisation call references the resource directory).
+        not_found_in_scope: No resources, OR resources found but no usage evidence ("unused translation assets" recorded in rationale and measurements).
+        unknown: Repository not inspected.
+      verification:
+        pass: every non-base locale has key coverage >= static.translation_coverage_pass.
+        partial: some locales meet the threshold and some do not.
+        fail: no non-base locale meets the threshold.
+        not_tested: fewer than two locales or resources unused.
+    evidence_required: [resource paths, locale key counts, usage call sites]
+    automation_limitations: Key coverage is not translation quality; dynamic key construction can hide usage.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: LANG-06
+    name: Untranslated visible strings after switching
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Share of visible text segments that remain identical (and in the original language/script) after switching language.
+    barrier: Mixed-language pages are hard to use for people who read only the chosen language.
+    applicability:
+      condition: LANG-02 switch attempted with an observable change.
+      not_applicable_when: Declared non-web project.
+    detectors:
+      runtime: [{id: rt.lang_switch, status: implemented, note: "segment-level comparison excluding numbers, URLs, single tokens on the allowlist"}]
+    decision_rules:
+      availability:
+        present: Switch produced a comparable after-state.
+        unknown: No comparable after-state.
+      verification:
+        pass: untranslated ratio <= thresholds.untranslated_pass_max_ratio.
+        partial: between pass and fail thresholds.
+        fail: untranslated ratio >= thresholds.untranslated_fail_min_ratio.
+        not_tested: no comparable after-state.
+    evidence_required: [untranslated segment examples, ratio, selectors]
+    automation_limitations: Proper nouns, brand names and shared terms may legitimately remain; supply metadata untranslated_allowlist.
+    manual_review: {required: true, instructions: "Check flagged untranslated strings; mark legitimate proper nouns."}
+    wcag: []
+    <<: *defaults
+
+  - id: LANG-07
+    name: Page language declared and consistent with content script
+    category: LANG
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: The html element declares a valid language whose expected script matches the dominant script of the visible text.
+    barrier: Assistive technologies mispronounce content when the page language is missing or wrong.
+    applicability:
+      condition: Rendered web page.
+      not_applicable_when: Declared non-web project.
+    detectors:
+      static: [{id: st.html_lang, status: implemented, note: "lang attribute on html in first-party templates"}]
+      runtime: [{id: rt.axe, status: implemented, rules: [html-has-lang, html-lang-valid, html-xml-lang-mismatch]}, {id: rt.dom_snapshot, status: implemented, note: "declared lang vs dominant Unicode script (CLDR likely-subtags)"}]
+    decision_rules:
+      availability:
+        present: html lang attribute present (runtime) or set in a parsed template (static).
+        not_found_in_scope: no lang on any rendered page / template.
+      verification:
+        pass: page has valid lang (axe pass) and no script mismatch.
+        fail: axe violation on html-has-lang/html-lang-valid/html-xml-lang-mismatch, or declared language's script differs from a dominant (>60%) script of visible letters.
+        not_tested: page not rendered.
+    evidence_required: [lang value, axe results, script shares]
+    automation_limitations: Latin-script languages cannot be distinguished by script; a lang="en" page in French passes the script proxy.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.1.1", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: LANG-08
+    name: Language of parts declared
+    category: LANG
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Passages whose script differs from the page language (e.g. language names in a switcher, bilingual headings) carry a lang attribute on themselves or an ancestor.
+    barrier: Screen readers read foreign-language passages with the wrong pronunciation rules.
+    applicability:
+      condition: At least one visible text passage in a script different from the page language's script.
+      not_applicable_when: No such passage on the sampled pages (recorded per page).
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [valid-lang]}, {id: rt.dom_snapshot, status: implemented, note: "script-mismatched passages without lang ancestry"}]
+    decision_rules:
+      availability:
+        present: Mixed-script passages observed (subject present).
+        not_applicable: No mixed-script passages on any rendered page.
+      verification:
+        pass: all mixed-script passages have matching lang ancestry and valid-lang has no violations.
+        partial: some do.
+        fail: none do, or valid-lang violation.
+        not_tested: page not rendered.
+    evidence_required: [passages, selectors, lang ancestry]
+    automation_limitations: Same-script language changes (e.g. English words in a French page) are not detectable automatically.
+    manual_review: {required: true, instructions: "Check same-script passages in other languages."}
+    wcag: [{sc: "3.1.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: LANG-09
+    name: Right-to-left layout support
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: When an RTL language (Arabic, Hebrew, Persian, Urdu, Pashto, Sindhi, Uyghur, Dhivehi, Yiddish, Kurdish-Sorani) is offered or expected, the interface switches to dir=rtl / computed direction rtl.
+    barrier: Left-to-right layout of RTL text breaks reading order, punctuation and form fields.
+    applicability:
+      condition: An RTL language is in metadata expected_languages, offered by the runtime switcher, or present in used translation resources.
+      not_applicable_when: None of the above.
+    detectors:
+      static: [{id: st.rtl, status: implemented, note: "dir handling, [dir=rtl]/:dir(rtl) CSS, logical properties, rtl libraries"}]
+      runtime: [{id: rt.lang_switch, status: implemented, note: "switch to RTL option, read html dir and computed direction of body/main"}]
+    decision_rules:
+      availability:
+        present: Static RTL handling found or runtime RTL direction observed.
+        not_found_in_scope: Applicable but no RTL handling observed.
+        not_applicable: Applicability condition false.
+      verification:
+        pass: after switching to an RTL option, computed direction of main content is rtl.
+        fail: after switching to an RTL option, direction remains ltr.
+        not_tested: no RTL option operable at runtime.
+    evidence_required: [option, dir attribute, computed direction]
+    automation_limitations: Mirroring of icons and bidi text quality need human review.
+    manual_review: {required: true, instructions: "Check mirrored layout, icons, and mixed-direction strings."}
+    wcag: [{sc: "1.3.2", relation: related, note: "meaningful sequence for RTL scripts"}]
+    <<: *defaults
+
+  - id: LANG-10
+    name: Locale-appropriate dates, numbers and form guidance
+    category: LANG
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Dates, numbers and input format hints follow the selected locale (e.g. Intl/Babel formatting, localized format hints).
+    barrier: Unfamiliar date/number formats cause entry errors.
+    applicability:
+      condition: Interface displays dates/numbers or requests formatted input.
+      not_applicable_when: Declared non-web project.
+    detectors:
+      static: [{id: st.locale_format, status: implemented, note: "Intl.DateTimeFormat/NumberFormat, toLocale*String, date-fns/moment/dayjs locale, babel.dates, format_date; heuristic"}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "hard-coded format hints such as DD/MM/YYYY in placeholders/labels (recorded for review)"}]
+    decision_rules:
+      availability:
+        present: Static indication of locale-aware formatting.
+        not_found_in_scope: No indication in inspected source.
+        unknown: Source not inspected.
+      verification:
+        not_tested: Always; locale appropriateness requires human judgement.
+    evidence_required: [source call sites, observed hints]
+    automation_limitations: Proxy only.
+    manual_review: {required: true, instructions: "In each offered language, check a date, a number and one format hint."}
+    wcag: []
+    <<: *defaults
+
+  # ---------------------------------------------------------------- NAVIGATION
+  - id: NAV-01
+    name: Main and navigation landmarks
+    category: NAV
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Pages expose a main landmark and navigation landmark(s) for groups of navigation links.
+    barrier: Without landmarks, screen-reader and keyboard users cannot jump to main content or navigation.
+    applicability:
+      condition: Rendered web page.
+      not_applicable_when: Declared non-web project.
+    detectors:
+      static: [{id: st.landmarks, status: implemented, note: "<main>/<nav>/role=main|navigation in parsed templates"}]
+      runtime: [{id: rt.dom_snapshot, status: implemented}, {id: rt.axe, status: implemented, rules: [landmark-one-main, region, bypass, landmark-no-duplicate-main, landmark-main-is-top-level]}]
+    decision_rules:
+      availability:
+        present: main landmark on at least one page (runtime) or in a parsed template (static).
+        not_found_in_scope: none found.
+      verification:
+        pass: page has exactly one main landmark and, if it has >=3 links grouped in header/nav-like containers, at least one navigation landmark; axe bypass has no violation.
+        partial: main present but no navigation landmark where expected, or axe region/bypass violations.
+        fail: no main landmark.
+        not_tested: page not rendered.
+    evidence_required: [landmark inventory, axe results]
+    automation_limitations: Landmarks are a technique; WCAG 1.3.1/2.4.1 can be met other ways.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.3.1", relation: related}, {sc: "2.4.1", relation: automated_partial}]
+    <<: *defaults
+
+  - id: NAV-02
+    name: Page titles present and distinct
+    category: NAV
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Each page has a non-empty title, distinct across different sampled pages.
+    barrier: Identical or missing titles make tabs, history and screen-reader page announcements useless.
+    applicability: {condition: Rendered web page., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [document-title]}, {id: rt.dom_snapshot, status: implemented, note: "title text compared across sampled pages"}]
+    decision_rules:
+      availability:
+        present: non-empty title on at least one page.
+        not_found_in_scope: no titles.
+      verification:
+        pass: title non-empty and not identical to another sampled page with different content.
+        partial: title duplicated across sampled pages (descriptiveness needs review).
+        fail: missing/empty title (axe document-title violation).
+        not_tested: page not rendered.
+    evidence_required: [titles per page]
+    automation_limitations: Whether a title describes topic or purpose needs human judgement.
+    manual_review: {required: false, instructions: "Spot-check that titles describe page purpose."}
+    wcag: [{sc: "2.4.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: NAV-03
+    name: Descriptive link names
+    category: NAV
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Links have accessible names, and names are not generic ("click here", "read more") without programmatic context.
+    barrier: Empty or generic links are meaningless when read out of context.
+    applicability: {condition: Page has links., not_applicable_when: No links on the page.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [link-name, area-alt]}, {id: rt.dom_snapshot, status: implemented, note: "generic link texts (config keywords.generic_link_text) without aria-label/aria-describedby"}]
+    decision_rules:
+      availability:
+        present: links observed.
+        not_applicable: no links.
+      verification:
+        pass: no axe link-name violations and no generic link names.
+        partial: no axe violations but generic names found (heuristic).
+        fail: axe link-name/area-alt violation.
+        not_tested: page not rendered.
+    evidence_required: [link texts, selectors]
+    automation_limitations: Link purpose from context (allowed by 2.4.4) is not evaluated.
+    manual_review: {required: false, instructions: "Check generic links for surrounding context."}
+    wcag: [{sc: "2.4.4", relation: automated_partial}, {sc: "4.1.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: NAV-04
+    name: Control names (buttons and commands)
+    category: NAV
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Buttons and command controls have accessible names, and visible label text is contained in the accessible name.
+    barrier: Unnamed controls are announced as "button" and cannot be operated by voice users.
+    applicability: {condition: Page has buttons/commands., not_applicable_when: None present.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [button-name, input-button-name, aria-command-name, summary-name, label-content-name-mismatch]}]
+    decision_rules:
+      availability: {present: controls observed (axe applicable)., not_applicable: all mapped rules inapplicable.}
+      verification:
+        pass: no violations in mapped rules.
+        fail: any violation.
+        not_tested: page not rendered; incomplete-only results are recorded for manual review.
+    evidence_required: [axe nodes]
+    automation_limitations: Descriptiveness of names is not judged.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "4.1.2", relation: automated_partial}, {sc: "2.5.3", relation: automated_partial}]
+    <<: *defaults
+
+  - id: NAV-05
+    name: Consistent repeated navigation
+    category: NAV
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Navigation links repeated across sampled pages appear in the same relative order.
+    barrier: Moving navigation forces users to relearn each page.
+    applicability: {condition: ">=2 sampled pages (same viewport) share navigation landmark links.", not_applicable_when: "Fewer than 2 pages with repeated navigation."}
+    detectors:
+      runtime: [{id: rt.consistency, status: implemented, note: "relative order of common nav link (text,href) pairs, desktop viewport"}]
+    decision_rules:
+      availability: {present: repeated navigation observed on >=2 pages., not_applicable: fewer than 2 such pages.}
+      verification:
+        pass: common links in same relative order on all compared pages.
+        fail: order differs on at least one compared page.
+        not_tested: insufficient pages.
+    evidence_required: [link sequences per page]
+    automation_limitations: Only the navigation landmark sequence is compared.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.2.3", relation: automated_partial}]
+    min_coverage: {runtime_pages: 2}
+    aggregation: {availability: any_present, verification: any_fail_is_fail, rollup: rollup_service_first}
+    universal_requirement: false
+
+  - id: NAV-06
+    name: Skip-to-content link works
+    category: NAV
+    label: wcag_related
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: An in-page link among the first three keyboard stops that targets the main content and moves focus/viewport there when activated.
+    barrier: Keyboard users must tab through repeated blocks on every page.
+    applicability: {condition: Rendered web page., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.skip_link, status: implemented}]
+      runtime: [{id: rt.keyboard_walk, status: implemented, note: "first three tab stops"}, {id: rt.skip_link_activation, status: implemented}, {id: rt.axe, status: implemented, rules: [skip-link]}]
+    decision_rules:
+      availability:
+        present: skip link found within first three tab stops (runtime) or in parsed templates (static).
+        not_found_in_scope: none found.
+      verification:
+        pass: activation with Enter moves focus into, or scrolls to, an existing target element.
+        fail: target missing or activation has no effect.
+        not_tested: no skip link found or keyboard state not run.
+    evidence_required: [link text, href, target, focus after activation]
+    automation_limitations: A skip link is one way to meet 2.4.1; its absence is not a failure (see NAV-01 landmarks).
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.4.1", relation: related}]
+    absence_interpretation: Not a failure by itself.
+    <<: *defaults
+
+  - id: NAV-07
+    name: Breadcrumbs where hierarchy exists
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Breadcrumb trail on pages at depth >= 2, marked up as a named navigation with the current page indicated.
+    barrier: Users lose their place in deep hierarchies.
+    applicability: {condition: "At least one sampled page has URL path depth >= 2.", not_applicable_when: "All sampled pages have depth < 2."}
+    detectors:
+      static: [{id: st.breadcrumb, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "aria-label/class breadcrumb, BreadcrumbList microdata/JSON-LD"}]
+    decision_rules:
+      availability: {present: breadcrumb observed., not_found_in_scope: none on applicable pages., not_applicable: no deep pages.}
+      verification:
+        pass: breadcrumb is inside a nav with an accessible name and marks current item (aria-current or last item not a link).
+        partial: breadcrumb present without nav semantics or current indication.
+        not_tested: no breadcrumb.
+    evidence_required: [breadcrumb DOM excerpt]
+    automation_limitations: ""
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    absence_interpretation: Not a universal requirement.
+    <<: *defaults
+
+  - id: NAV-08
+    name: Site search where relevant
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: A search control (search landmark, type=search, or search form) with an accessible name.
+    barrier: Users cannot find content in large sites without search.
+    applicability: {condition: "Interface with >= 20 discovered internal URLs or declared documentation/data portal.", not_applicable_when: "Small sites below that size."}
+    detectors:
+      static: [{id: st.search, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: search control observed., not_found_in_scope: none., not_applicable: small site.}
+      verification:
+        pass: search input has an accessible name and is keyboard reachable (tab walk).
+        fail: unnamed search input.
+        not_tested: no search or keyboard state not run.
+    evidence_required: [selector, name]
+    automation_limitations: Search results are not submitted or evaluated.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    absence_interpretation: Not a universal requirement.
+    <<: *defaults
+
+  - id: NAV-09
+    name: Help/FAQ discoverable from the homepage
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: A link to help, FAQ or guidance content is visible on the homepage (multilingual cue list).
+    barrier: Users who get stuck cannot find assistance.
+    applicability: {condition: Homepage rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.keywords, status: implemented, note: "link text/aria-label/href cues; heuristic"}, {id: rt.link_check, status: implemented}]
+    decision_rules:
+      availability: {present: cue-matching link on homepage., not_found_in_scope: none matched.}
+      verification:
+        pass: link target responds with HTTP < 400.
+        fail: target HTTP >= 400 (excluding 401/403).
+        not_tested: not checked.
+    evidence_required: [link text, href, status]
+    automation_limitations: Keyword cues miss unconventional wording; reviewers confirm.
+    manual_review: {required: true, instructions: "Confirm the link leads to user help, not developer documentation."}
+    wcag: []
+    <<: *defaults
+
+  - id: NAV-10
+    name: Contact/support channel discoverable
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Contact or support link, mailto/tel link, or contact form visible on the homepage.
+    barrier: Users who cannot self-serve have no route to human assistance.
+    applicability: {condition: Homepage rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.keywords, status: implemented}, {id: rt.link_check, status: implemented}]
+    decision_rules:
+      availability: {present: "cue-matching link, mailto or tel on homepage", not_found_in_scope: none.}
+      verification:
+        pass: http(s) target responds < 400, or mailto/tel present.
+        fail: target >= 400 (excluding 401/403).
+        not_tested: not checked.
+    evidence_required: [link text, href, status]
+    automation_limitations: Heuristic cues.
+    manual_review: {required: true, instructions: "Confirm it is a support channel for service users."}
+    wcag: []
+    <<: *defaults
+
+  - id: NAV-11
+    name: Consistent help placement
+    category: NAV
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Help/contact mechanisms repeated on multiple pages occur in the same region and relative order.
+    barrier: Help that moves around is hard to find for people with cognitive disabilities.
+    applicability: {condition: "Help/contact mechanism on >= 2 sampled pages.", not_applicable_when: "Fewer than 2."}
+    detectors:
+      runtime: [{id: rt.consistency, status: implemented, note: "landmark region and index among region links"}]
+    decision_rules:
+      availability: {present: help mechanism on >= 2 pages., not_applicable: fewer.}
+      verification:
+        pass: same region and same relative order on all compared pages.
+        fail: differs on any compared page.
+        not_tested: insufficient pages.
+    evidence_required: [region/index per page]
+    automation_limitations: Proxy for relative order with respect to other page content.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.2.6", relation: automated_partial}]
+    min_coverage: {runtime_pages: 2}
+    aggregation: {availability: any_present, verification: any_fail_is_fail, rollup: rollup_service_first}
+    universal_requirement: false
+
+  - id: NAV-12
+    name: Broken internal links
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Internal links found on sampled pages resolve (HTTP < 400). 401/403 are recorded as restricted, not broken.
+    barrier: Broken links strand users mid-task.
+    applicability: {condition: Internal links checked., not_applicable_when: No internal links.}
+    detectors:
+      runtime: [{id: rt.link_check, status: implemented, note: "HEAD then GET, rate-limited, robots-respected, budget runtime.states.link_check.max_links"}]
+    decision_rules:
+      availability: {present: internal links checked., not_applicable: none.}
+      verification:
+        pass: no checked link on the page returns 404/410/5xx.
+        fail: at least one does.
+        not_tested: link check disabled or budget exhausted before this page.
+    evidence_required: [URL, status, source page]
+    automation_limitations: Bounded sample of links; transient server errors possible.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: NAV-13
+    name: Dead-end pages
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Sampled pages that are soft-404s (HTTP 200 with not-found title/heading) or offer no internal navigation links.
+    barrier: Users cannot continue or recover.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: page rendered.}
+      verification:
+        pass: page has >= 1 internal link and is not a soft-404.
+        fail: soft-404 or no internal link.
+        not_tested: page not rendered.
+    evidence_required: [title, h1, internal link count]
+    automation_limitations: Single-page apps with JS routing may expose links as buttons.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: NAV-14
+    name: Critical journeys (metadata-defined) completion
+    category: NAV
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: For journeys explicitly defined in metadata, the number of steps completed without real submissions.
+    barrier: Users cannot complete key tasks.
+    applicability: {condition: Journeys defined in metadata., not_applicable_when: No journeys defined.}
+    detectors:
+      runtime: [{id: rt.journeys, status: implemented, note: "goto/click/expect_text/expect_url/press/fill_test_value; mutating requests blocked"}]
+    decision_rules:
+      availability: {present: journey start reachable., not_found_in_scope: start unreachable., not_applicable: no journeys.}
+      verification:
+        pass: all steps completed.
+        partial: some steps completed.
+        fail: first step failed.
+        not_tested: not run.
+    evidence_required: [step log, URLs, screenshots]
+    automation_limitations: No real submissions; journeys requiring login run only in authorized test environments.
+    manual_review: {required: true, instructions: "Repeat the journey with assistive technology."}
+    wcag: []
+    <<: *defaults
+
+  # ------------------------------------------------------- KEYBOARD / ASSISTIVE
+  - id: KBD-01
+    name: Keyboard reachability of sampled controls
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Visible interactive controls (native, ARIA widgets) are reached in the Tab sequence; pointer-only candidates are listed separately.
+    barrier: Controls that cannot be focused are unusable without a mouse.
+    applicability: {condition: Page has visible interactive controls., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.keyboard_walk, status: implemented, note: "Tab up to runtime.states.keyboard.max_tab_stops; composite widgets (roving tabindex) counted via container"}]
+    decision_rules:
+      availability: {present: controls enumerated., not_applicable: none.}
+      verification:
+        pass: every eligible native/ARIA control reached (or the Tab cycle completed and none missed).
+        fail: at least one visible native/ARIA control (outside composite widgets) never reached during a completed cycle.
+        partial: only heuristic pointer-only candidates (cursor:pointer/click listener without focusability) missed, or budget exhausted before the cycle completed.
+        not_tested: keyboard state not run.
+    evidence_required: [tested control list, tab sequence, unreached controls]
+    automation_limitations: Only Tab/Shift+Tab; arrow-key patterns inside widgets not exercised. Controls inside closed menus are not visible and not counted.
+    manual_review: {required: false, instructions: "Check pointer-only candidates."}
+    wcag: [{sc: "2.1.1", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: KBD-02
+    name: Keyboard activation of sampled controls
+    category: KBD
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Safe in-page controls (disclosure/menu buttons with aria-expanded or aria-controls, summary, tabs) respond to Enter/Space with an observable change.
+    barrier: Controls that only respond to mouse clicks exclude keyboard users.
+    applicability: {condition: Safe in-page controls present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.keyboard_activation, status: implemented, note: "max 4 controls per page; aria-expanded/attribute/DOM mutation/focus change observed"}]
+    decision_rules:
+      availability: {present: candidate controls found., not_applicable: none.}
+      verification:
+        pass: every tested control changed state on Enter or Space.
+        partial: some did.
+        fail: none did.
+        not_tested: not run.
+    evidence_required: [control, key, observed change]
+    automation_limitations: Navigating links are not activated; effects outside the DOM (sound) not observed.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.1.1", relation: automated_partial}]
+    <<: *defaults
+
+  - id: KBD-03
+    name: Visible focus indicator
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Each tested tab stop shows a visible change (pixel difference of the element region focused vs. unfocused >= thresholds.focus_pixel_change_min).
+    barrier: Keyboard users cannot see where they are.
+    applicability: {condition: Focusable controls present., not_applicable_when: None.}
+    detectors:
+      static: [{id: st.focus_css, status: implemented, note: "outline:none/0 in :focus rules without replacement (candidate issues); :focus-visible styles (implementation)"}]
+      runtime: [{id: rt.keyboard_walk, status: implemented, note: "clip screenshots focused/unfocused for the first runtime.states.keyboard.focus_screenshot_stops stops"}]
+    decision_rules:
+      availability:
+        present: at least one tab stop with a visible focus change (runtime) or focus styles defined in CSS (static).
+        not_found_in_scope: no tested stop showed a change and no focus styles found.
+      verification:
+        pass: all tested stops show a visible change.
+        partial: some do.
+        fail: none do.
+        not_tested: keyboard state not run.
+    evidence_required: [per-stop pixel change counts, screenshots of failing stops, computed outline/box-shadow]
+    automation_limitations: Visibility is measured as pixel change, not contrast or size (2.4.13 AAA not assessed).
+    manual_review: {required: false, instructions: "Check low-contrast indicators."}
+    wcag: [{sc: "2.4.7", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: KBD-04
+    name: Focused element not obscured
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: When focused, a control is not entirely hidden by author-created content (sticky headers, cookie banners).
+    barrier: Users cannot see the focused control.
+    applicability: {condition: Focusable controls present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.keyboard_walk, status: implemented, note: "elementFromPoint at 5 points of the focused rect after scrolling into view"}]
+    decision_rules:
+      availability: {present: tab stops tested.}
+      verification:
+        pass: no tested stop entirely covered.
+        fail: at least one tested stop entirely covered by another element.
+        not_tested: keyboard state not run.
+    evidence_required: [covered stops, covering element]
+    automation_limitations: Users may dismiss banners; tested in initial state only.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.4.11", relation: automated_partial}]
+    aggregation: {availability: any_present, verification: any_fail_is_fail, rollup: rollup_service_first}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: true
+
+  - id: KBD-05
+    name: Modal dialog focus management
+    category: KBD
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Opening a dialog via keyboard moves focus into it, keeps focus inside a modal dialog, allows keyboard dismissal (Escape or a reachable close control) and returns focus to the trigger.
+    barrier: Focus left behind a modal disorients keyboard and screen-reader users.
+    applicability: {condition: "Dialog triggers found (aria-haspopup=dialog, aria-controls -> role=dialog, data-*toggle=modal, <dialog>)", not_applicable_when: "No dialog triggers on sampled pages."}
+    detectors:
+      static: [{id: st.dialog_focus, status: implemented}]
+      runtime: [{id: rt.modal, status: implemented}]
+    decision_rules:
+      availability: {present: "focus moved into an opened dialog (runtime) or focus management code found (static)", not_found_in_scope: "dialogs opened but focus never moved in", not_applicable: "no dialogs"}
+      verification:
+        pass: all four sub-checks hold for every tested dialog.
+        partial: some sub-checks hold.
+        fail: focus not moved in AND not dismissible by keyboard.
+        not_tested: no dialog could be opened.
+    evidence_required: [trigger, sub-check results, focus sequence]
+    automation_limitations: Up to runtime.states.modal.max_dialogs_per_page per page.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.4.3", relation: automated_partial}, {sc: "2.1.2", relation: related}]
+    <<: *defaults
+
+  - id: KBD-06
+    name: No keyboard trap
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Focus can always move away from any component using Tab, Shift+Tab or Escape.
+    barrier: A trap blocks keyboard users entirely.
+    applicability: {condition: Focusable controls present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.keyboard_walk, status: implemented, note: "cycle detection; Shift+Tab and Escape escape attempts"}, {id: rt.modal, status: implemented}]
+    decision_rules:
+      availability: {present: keyboard walk run.}
+      verification:
+        pass: Tab cycle completed (focus returned to start or document) with no inescapable cycle.
+        fail: focus stuck on an element or in a subset cycle that Shift+Tab and Escape cannot leave.
+        not_tested: keyboard state not run.
+    evidence_required: [focus sequence, trapped elements]
+    automation_limitations: Traps inside embedded third-party frames may be missed.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.1.2", relation: automated_partial}]
+    aggregation: {availability: any_present, verification: any_fail_is_fail, rollup: rollup_service_first}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: true
+
+  - id: KBD-07
+    name: Accessible names, roles and states
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: ARIA roles, attributes and states are valid and complete; focusable elements are not hidden from assistive technologies; frames have titles.
+    barrier: Incorrect semantics make controls unusable with assistive technologies.
+    applicability: {condition: Page rendered., not_applicable_when: All mapped rules inapplicable.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [aria-allowed-attr, aria-required-attr, aria-valid-attr, aria-valid-attr-value, aria-roles, aria-prohibited-attr, aria-conditional-attr, aria-deprecated-role, aria-hidden-focus, aria-hidden-body, aria-required-children, aria-required-parent, aria-toggle-field-name, aria-tooltip-name, aria-meter-name, aria-progressbar-name, aria-roledescription, aria-braille-equivalent, aria-tab-name, nested-interactive, frame-title, frame-title-unique, duplicate-id-aria, scrollable-region-focusable]}]
+    decision_rules:
+      availability: {present: any mapped rule applicable., not_applicable: all inapplicable.}
+      verification: {pass: no violations., fail: any violation., not_tested: not rendered.}
+    evidence_required: [axe nodes]
+    automation_limitations: Correct state updates during interaction are only tested in KBD-02/KBD-05.
+    manual_review: {required: true, instructions: "Screen-reader usability requires human testing."}
+    wcag: [{sc: "4.1.2", relation: automated_partial}, {sc: "1.3.1", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: KBD-08
+    name: Heading structure
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Pages use headings, without empty headings, with an h1 and without skipped levels.
+    barrier: Screen-reader users navigate by headings; missing or broken outlines hide structure.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented}, {id: rt.axe, status: implemented, rules: [empty-heading, heading-order, page-has-heading-one]}]
+    decision_rules:
+      availability: {present: at least one heading., not_found_in_scope: no headings on any page.}
+      verification:
+        pass: headings present, no empty headings, h1 present, no skipped levels.
+        partial: headings present but heading-order/page-has-heading-one issues (best-practice).
+        fail: empty heading (axe) or no headings on a page with >150 words of visible text.
+        not_tested: not rendered.
+    evidence_required: [outline]
+    automation_limitations: Visual headings not marked up are not detected (axe p-as-heading is experimental and not run).
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.3.1", relation: related}, {sc: "2.4.6", relation: related}]
+    <<: *defaults
+
+  - id: KBD-09
+    name: Image text alternatives (decorative distinguished)
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Informative images have text alternatives; decorative images are marked (alt="", role=presentation/none, aria-hidden).
+    barrier: Screen-reader users miss information conveyed by images.
+    applicability: {condition: Images present., not_applicable_when: No images.}
+    detectors:
+      static: [{id: st.img_alt, status: implemented, note: "img/Image without alt in parsed templates (candidate issues)"}]
+      runtime: [{id: rt.axe, status: implemented, rules: [image-alt, input-image-alt, role-img-alt, svg-img-alt, area-alt, object-alt, image-redundant-alt]}, {id: rt.dom_snapshot, status: implemented, note: "counts informative/decorative/missing"}]
+    decision_rules:
+      availability: {present: "at least one image has alt text or decorative marking", not_found_in_scope: "images present but none has alt/decorative marking", not_applicable: "no images"}
+      verification: {pass: "no violations in WCAG rules (image-redundant-alt is best-practice, recorded only)", fail: "any violation", not_tested: "not rendered"}
+    evidence_required: [counts, failing images]
+    automation_limitations: Alt quality and correct decorative classification need human review.
+    manual_review: {required: true, instructions: "Check that alt text conveys purpose and decorative images are truly decorative."}
+    wcag: [{sc: "1.1.1", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: KBD-10
+    name: Form field labels
+    category: KBD
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: Form fields have programmatic labels (label/for, wrapping label, aria-label/labelledby); placeholder/title-only labels are flagged.
+    barrier: Unlabelled fields cannot be identified by screen-reader or voice users.
+    applicability: {condition: Form fields present., not_applicable_when: None.}
+    detectors:
+      static: [{id: st.form_labels, status: implemented}]
+      runtime: [{id: rt.axe, status: implemented, rules: [label, select-name, form-field-multiple-labels, aria-input-field-name, label-title-only]}, {id: rt.dom_snapshot, status: implemented, note: "placeholder-only labelling"}]
+    decision_rules:
+      availability: {present: "at least one labelled field", not_found_in_scope: "fields present, none labelled", not_applicable: "no fields"}
+      verification: {pass: "no violations in WCAG-tagged mapped rules and no placeholder-only labels", partial: "only best-practice label-title-only or placeholder-only findings", fail: "any WCAG-tagged violation", not_tested: "not rendered"}
+    evidence_required: [fields, labels]
+    automation_limitations: Label descriptiveness not judged.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.3.1", relation: automated_partial}, {sc: "4.1.2", relation: automated_partial}, {sc: "3.3.2", relation: related}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: KBD-11
+    name: Status and error messages announced
+    category: KBD
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Dynamically inserted status/error messages are in live regions (role=alert/status/log, aria-live, output) or receive focus.
+    barrier: Screen-reader users do not learn about errors or confirmations.
+    applicability: {condition: "A dynamic message appeared in a tested state (form_error).", not_applicable_when: "No dynamic messages observed."}
+    detectors:
+      static: [{id: st.live_regions, status: implemented}]
+      runtime: [{id: rt.form_error, status: implemented, note: "MutationObserver during safe simulated validation"}]
+    decision_rules:
+      availability: {present: "live region present in DOM or source", not_found_in_scope: "messages appeared but none in live regions"}
+      verification: {pass: "every observed dynamic message is in a live region or focused", partial: "some", fail: "none", not_tested: "no dynamic message observed"}
+    evidence_required: [message text, container, live attributes]
+    automation_limitations: Announcement by real screen readers not verified.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "4.1.3", relation: automated_partial}]
+    <<: *defaults
+
+  - id: KBD-12
+    name: Alternatives to dragging
+    category: KBD
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Functionality operated by dragging has a single-pointer, non-drag alternative.
+    barrier: People with motor impairments cannot drag.
+    applicability: {condition: "Draggable UI detected (draggable=true, drag-and-drop libraries in first-party code).", not_applicable_when: "Not detected."}
+    detectors:
+      static: [{id: st.drag, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "draggable elements; nearby buttons recorded"}]
+    decision_rules:
+      availability: {present: "drag functionality detected (subject)", not_applicable: "none"}
+      verification: {not_tested: "Always; requires human review of alternatives."}
+    evidence_required: [elements, source]
+    automation_limitations: Human-only verification.
+    manual_review: {required: true, instructions: "Find a non-drag way to perform each drag action."}
+    wcag: [{sc: "2.5.7", relation: manual}]
+    <<: *defaults
+
+  - id: KBD-13
+    name: CAPTCHA with accessible alternative
+    category: KBD
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: subject_presence
+    definition: Where a CAPTCHA is used, an alternative modality (e.g. audio) or non-cognitive alternative is available.
+    barrier: Image/puzzle CAPTCHAs block blind users and many with cognitive disabilities.
+    applicability: {condition: CAPTCHA detected., not_applicable_when: None detected.}
+    detectors:
+      static: [{id: st.captcha, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "reCAPTCHA/hCaptcha/Turnstile frames, image CAPTCHAs, audio alternatives"}]
+    decision_rules:
+      availability: {present: CAPTCHA detected., not_applicable: none.}
+      verification:
+        partial: "third-party CAPTCHA with vendor audio option (needs review)"
+        fail: "image/text CAPTCHA without any audio/alternative control (heuristic)"
+        not_tested: "otherwise"
+    evidence_required: [captcha element, alternative]
+    automation_limitations: Heuristic; vendor CAPTCHA accessibility varies.
+    manual_review: {required: true, instructions: "Attempt the CAPTCHA alternative with a screen reader."}
+    wcag: [{sc: "1.1.1", relation: related, note: "CAPTCHA clause"}, {sc: "3.3.8", relation: related}]
+    <<: *defaults
+
+  # ------------------------------------------------------------------ VISUAL
+  - id: VIS-01
+    name: Text contrast
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Text meets minimum contrast (axe color-contrast).
+    barrier: Low contrast text is unreadable for people with low vision.
+    applicability: {condition: Text rendered., not_applicable_when: No text.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [color-contrast]}]
+    decision_rules:
+      availability: {present: text assessed.}
+      verification: {pass: "no violations", fail: "any violation", not_tested: "not rendered; incomplete nodes (images/gradients) go to manual review"}
+    evidence_required: [axe nodes with ratios]
+    automation_limitations: Text over images/gradients reported as incomplete.
+    manual_review: {required: false, instructions: "Check axe incomplete nodes."}
+    wcag: [{sc: "1.4.3", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: VIS-02
+    name: Non-text (UI component) contrast
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Form control boundaries (border or fill) have >= 3:1 contrast against the adjacent background.
+    barrier: Invisible field boundaries hide where to type.
+    applicability: {condition: Visible form controls., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.control_contrast, status: implemented, note: "computed border/background colours vs effective parent background; heuristic"}]
+    decision_rules:
+      availability: {present: controls assessed., not_applicable: none.}
+      verification: {pass: "all controls have border or fill contrast >= 3:1", partial: "some", fail: "none", not_tested: "not run"}
+    evidence_required: [control, colours, ratios]
+    automation_limitations: Ignores images, gradients, shadows and state indicators; heuristic grade.
+    manual_review: {required: true, instructions: "Check icons, focus indicators and custom controls."}
+    wcag: [{sc: "1.4.11", relation: automated_partial}]
+    <<: *defaults
+
+  - id: VIS-03
+    name: Mobile-width layout
+    category: VIS
+    label: ux_research_indicator
+    requirement_level: universal_check
+    availability_semantics: implementation
+    definition: At the configured mobile viewport the page declares a responsive viewport and has no horizontal page overflow.
+    barrier: Mobile-first users face pinch-and-scroll pages.
+    applicability: {condition: Page rendered at mobile viewport., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.viewport_meta, status: implemented}]
+      runtime: [{id: rt.mobile, status: implemented}]
+    decision_rules:
+      availability: {present: "meta viewport width=device-width", not_found_in_scope: "not declared"}
+      verification: {pass: "scrollWidth <= viewport width + tolerance", fail: "horizontal overflow", not_tested: "not rendered"}
+    evidence_required: [scrollWidth, widest elements, screenshot]
+    automation_limitations: ""
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.4.10", relation: related}]
+    <<: *defaults
+
+  - id: VIS-04
+    name: Reflow at 320 CSS px
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: At 320 CSS px width content reflows without two-dimensional scrolling, except content needing 2-D layout (tables, maps, diagrams, code, video).
+    barrier: Users who zoom to 400% must scroll in two directions.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.reflow, status: implemented}]
+    decision_rules:
+      availability: {present: page assessed.}
+      verification: {pass: "no horizontal overflow, or overflow only from exempt elements", fail: "overflow caused by non-exempt elements", not_tested: "not run"}
+    evidence_required: [overflowing elements, screenshot]
+    automation_limitations: Loss of content/functionality inside the viewport not assessed.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.4.10", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: VIS-05
+    name: Text resize / browser zoom to 200%
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Zoom is not disabled (meta viewport) and at an emulated 200% zoom text is not newly clipped. Applies regardless of any custom text-size buttons.
+    barrier: People with low vision rely on browser zoom.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.viewport_meta, status: implemented}]
+      runtime: [{id: rt.axe, status: implemented, rules: [meta-viewport, meta-viewport-large]}, {id: rt.zoom, status: implemented, note: "viewport base/2 at device scale factor 2; clipped text vs baseline"}]
+    decision_rules:
+      availability: {present: page assessed.}
+      verification: {pass: "no meta-viewport violation and no newly clipped text", partial: "newly clipped text elements (heuristic)", fail: "axe meta-viewport violation", not_tested: "not run"}
+    evidence_required: [viewport meta, clipped elements]
+    automation_limitations: Emulation approximates browser zoom.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.4.4", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: VIS-06
+    name: Text spacing override
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: With WCAG 1.4.12 spacing (line-height 1.5, paragraph spacing 2x, letter 0.12em, word 0.16em) no text is newly clipped; no !important inline spacing.
+    barrier: Users who need spacing overrides lose content.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.text_spacing, status: implemented}, {id: rt.axe, status: implemented, rules: [avoid-inline-spacing]}]
+    decision_rules:
+      availability: {present: page assessed.}
+      verification: {pass: "no newly clipped text and no avoid-inline-spacing violation", partial: "newly clipped text (heuristic)", fail: "avoid-inline-spacing violation", not_tested: "not run"}
+    evidence_required: [clipped elements]
+    automation_limitations: Overlap without clipping is not detected.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.4.12", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: VIS-07
+    name: Minimum target size
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Pointer targets are >= 24x24 CSS px or meet the spacing exception (axe target-size implements spacing; inline/UA/essential exceptions noted).
+    barrier: Small, crowded targets cause mis-taps.
+    applicability: {condition: Targets present., not_applicable_when: axe rule inapplicable.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [target-size]}, {id: rt.dom_snapshot, status: implemented, note: "descriptive count of targets < 24px"}]
+    decision_rules:
+      availability: {present: targets assessed., not_applicable: inapplicable.}
+      verification: {pass: "no violations", fail: "any violation", not_tested: "not rendered"}
+    evidence_required: [axe nodes]
+    automation_limitations: Equivalent-control and essential exceptions need review.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.5.8", relation: automated_partial}]
+    universal_requirement: true
+    <<: *defaults
+
+  - id: VIS-08
+    name: Information conveyed only by colour (automated proxies)
+    category: VIS
+    label: wcag_related
+    requirement_level: universal_check
+    availability_semantics: subject_presence
+    definition: Links in text blocks are distinguishable without colour (axe link-in-text-block); other colour-only cues require review.
+    barrier: Colour-blind users miss information.
+    applicability: {condition: Links within text blocks., not_applicable_when: axe rule inapplicable.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [link-in-text-block]}]
+    decision_rules:
+      availability: {present: assessed., not_applicable: inapplicable.}
+      verification: {pass: "no violations", fail: "violation", not_tested: "not rendered"}
+    evidence_required: [axe nodes]
+    automation_limitations: Charts, status colours and error states not assessed.
+    manual_review: {required: true, instructions: "Check form errors, charts and status indicators for colour-only meaning."}
+    wcag: [{sc: "1.4.1", relation: automated_partial}]
+    <<: *defaults
+
+  - id: VIS-09
+    name: Reduced-motion preference respected
+    category: VIS
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: With prefers-reduced-motion emulated, running animations stop or are reduced.
+    barrier: Motion triggers vestibular discomfort.
+    applicability: {condition: "Running animations/transitions observed on the page.", not_applicable_when: "No animations observed."}
+    detectors:
+      static: [{id: st.reduced_motion_css, status: implemented}]
+      runtime: [{id: rt.reduced_motion, status: implemented}]
+    decision_rules:
+      availability: {present: "prefers-reduced-motion handled (static) or animation count drops (runtime)", not_found_in_scope: "applicable and no handling observed", not_applicable: "no animations"}
+      verification: {pass: "no running animations under reduced motion", partial: "fewer", fail: "same or more", not_tested: "not run"}
+    evidence_required: [animation counts]
+    automation_limitations: JS-driven motion not using Web Animations is missed.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "2.3.3", relation: related, note: "AAA"}]
+    <<: *defaults
+
+  - id: VIS-10
+    name: Pause/stop for auto-moving content
+    category: VIS
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Auto-moving content lasting > 5 s (infinite animations, marquee, autoplay video, carousels) has a pause/stop/hide control.
+    barrier: Moving content distracts and blocks reading.
+    applicability: {condition: Auto-moving content detected., not_applicable_when: None detected.}
+    detectors:
+      runtime: [{id: rt.axe, status: implemented, rules: [marquee, blink]}, {id: rt.dom_snapshot, status: implemented, note: "infinite animations, autoplay media, pause control cues"}]
+    decision_rules:
+      availability: {present: "pause/stop control near moving content", not_found_in_scope: "moving content without control", not_applicable: "none"}
+      verification: {pass: "control present for every moving region (heuristic)", fail: "axe marquee/blink violation or no control", not_tested: "otherwise"}
+    evidence_required: [moving elements, controls]
+    automation_limitations: Carousel detection is heuristic; control operation not verified.
+    manual_review: {required: true, instructions: "Operate the pause control."}
+    wcag: [{sc: "2.2.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: VIS-11
+    name: Captions for video
+    category: VIS
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Videos with audio provide captions (track kind=captions/subtitles); embedded third-party players need review.
+    barrier: Deaf and hard-of-hearing users miss audio content.
+    applicability: {condition: Video element or known video embed present., not_applicable_when: None.}
+    detectors:
+      static: [{id: st.media_tracks, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented}, {id: rt.axe, status: implemented, rules: [video-caption]}]
+    decision_rules:
+      availability: {present: "caption track present", not_found_in_scope: "native video without track", not_applicable: "no video"}
+      verification: {pass: "every native video has a caption/subtitle track", fail: "native video without track", not_tested: "only third-party embeds"}
+    evidence_required: [media elements]
+    automation_limitations: Caption accuracy not assessed; YouTube/Vimeo captions not inspected.
+    manual_review: {required: true, instructions: "Check captions exist and are accurate."}
+    wcag: [{sc: "1.2.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: VIS-12
+    name: Transcripts for audio/video
+    category: VIS
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: A transcript or media alternative is linked near audio/video.
+    barrier: Users who cannot hear or see media need text.
+    applicability: {condition: Audio/video present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "transcript cue within the media's container"}]
+    decision_rules:
+      availability: {present: transcript cue found., not_found_in_scope: none., not_applicable: no media.}
+      verification: {not_tested: "Always (human review)."}
+    evidence_required: [media, cue]
+    automation_limitations: Heuristic.
+    manual_review: {required: true, instructions: "Check transcript completeness."}
+    wcag: [{sc: "1.2.1", relation: related}, {sc: "1.2.3", relation: related}]
+    <<: *defaults
+
+  - id: VIS-13
+    name: Audio description evidence
+    category: VIS
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Video offers audio description (track kind=descriptions or a described version link).
+    barrier: Blind users miss visual-only information.
+    applicability: {condition: Video present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: description evidence., not_found_in_scope: none., not_applicable: no video.}
+      verification: {not_tested: "Always (human review)."}
+    evidence_required: [media]
+    automation_limitations: Need depends on whether visuals carry information.
+    manual_review: {required: true, instructions: "Decide whether description is needed and present."}
+    wcag: [{sc: "1.2.5", relation: related}]
+    <<: *defaults
+
+  - id: VIS-14
+    name: Custom text-size control (optional)
+    category: VIS
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: An on-page control (e.g. A+/A-) that enlarges body text.
+    barrier: Descriptive only; browser zoom (VIS-05) is what WCAG relies on.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.text_size_control, status: implemented}]
+      runtime: [{id: rt.text_size_control, status: implemented}]
+    decision_rules:
+      availability: {present: control found., not_found_in_scope: none.}
+      verification: {pass: "activation increases computed body font-size", fail: "no increase", not_tested: "no control"}
+    evidence_required: [control, font sizes]
+    automation_limitations: ""
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    absence_interpretation: Never a requirement.
+    <<: *defaults
+
+  - id: VIS-15
+    name: Colour-scheme / contrast mode (optional)
+    category: VIS
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: The page responds to prefers-color-scheme or offers a contrast/theme toggle.
+    barrier: Descriptive only.
+    applicability: {condition: Page rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.color_scheme, status: implemented}]
+      runtime: [{id: rt.color_scheme, status: implemented, note: "emulate dark scheme; compare background and axe color-contrast violations"}]
+    decision_rules:
+      availability: {present: "colours change under dark emulation, or toggle found", not_found_in_scope: "neither"}
+      verification: {pass: "under the alternative scheme color-contrast violations do not increase", fail: "violations increase", not_tested: "no alternative scheme"}
+    evidence_required: [colours, violation counts]
+    automation_limitations: Toggle activation not exercised.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    absence_interpretation: Never a requirement.
+    <<: *defaults
+
+  - id: VIS-16
+    name: Third-party accessibility overlay present (descriptive, no credit)
+    category: VIS
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: implementation
+    definition: Known overlay/widget scripts detected. Recorded descriptively; never credited as accessibility and never required.
+    barrier: Descriptive only.
+    applicability: {condition: Page rendered or source inspected., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.overlay, status: implemented}]
+      runtime: [{id: rt.dom_snapshot, status: implemented, note: "script/iframe host patterns"}]
+    decision_rules:
+      availability: {present: overlay detected., not_found_in_scope: none.}
+      verification: {not_tested: "Always."}
+    evidence_required: [script URL]
+    automation_limitations: Pattern list may be incomplete.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  # ------------------------------------------------------------------- FORMS
+  - id: FORM-01
+    name: Required fields indicated
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Required fields are indicated in visible label/legend/instructions and programmatically (required/aria-required).
+    barrier: Users submit incomplete forms and get errors.
+    applicability: {condition: "Forms with required fields (programmatic or visual *).", not_applicable_when: "No such fields."}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: "visible or programmatic indication found", not_applicable: "no required fields"}
+      verification: {pass: "every required field has both visible and programmatic indication", partial: "some", fail: "none", not_tested: "not rendered"}
+    evidence_required: [fields, label text]
+    automation_limitations: Instructions at form level ("all fields required") recognised by keyword only.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.3.2", relation: automated_partial}, {sc: "1.3.1", relation: related}]
+    <<: *defaults
+
+  - id: FORM-02
+    name: Input format instructions
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Fields with format constraints (pattern, minlength/maxlength, date/tel types) have persistent instructions (described-by or label text), not placeholder only.
+    barrier: Users guess formats and fail validation.
+    applicability: {condition: Constrained fields present., not_applicable_when: None.}
+    detectors:
+      runtime: [{id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: "instruction found for >=1 constrained field", not_found_in_scope: "none", not_applicable: "no constrained fields"}
+      verification: {pass: "all constrained fields have persistent instructions", partial: "some, or placeholder-only", fail: "none", not_tested: "not rendered"}
+    evidence_required: [fields, hints]
+    automation_limitations: Heuristic association.
+    manual_review: {required: true, instructions: "Check instructions are understandable."}
+    wcag: [{sc: "3.3.2", relation: automated_partial}]
+    <<: *defaults
+
+  - id: FORM-03
+    name: Error identification
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: After a safe simulated invalid submission, each invalid field is identified with text (custom message or native validation message).
+    barrier: Users do not know what went wrong.
+    applicability: {condition: "Form with required/constrained fields tested in form_error state.", not_applicable_when: "No forms with validation."}
+    detectors:
+      runtime: [{id: rt.form_error, status: implemented, note: "empty required fields, all mutating requests aborted"}]
+    decision_rules:
+      availability: {present: "error text observed", not_found_in_scope: "invalid state produced no text"}
+      verification: {pass: "every invalid field identified", partial: "some", fail: "none", not_tested: "form not tested or submission blocked before validation"}
+    evidence_required: [error texts, fields, screenshot]
+    automation_limitations: Server-side validation is never exercised on real services.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.3.1", relation: automated_partial}]
+    <<: *defaults
+
+  - id: FORM-04
+    name: Errors associated with fields
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Invalid fields expose aria-invalid and reference error text (aria-describedby/aria-errormessage or label). Native validation only is recorded as partial.
+    barrier: Screen-reader users cannot tell which field an error belongs to.
+    applicability: {condition: FORM-03 produced errors., not_applicable_when: No errors produced.}
+    detectors:
+      runtime: [{id: rt.form_error, status: implemented}]
+    decision_rules:
+      availability: {present: "association found", not_found_in_scope: "errors not associated"}
+      verification: {pass: "all errors associated", partial: "some, or native-validation only", fail: "none", not_tested: "no errors"}
+    evidence_required: [field, aria attributes, error element]
+    automation_limitations: ""
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.3.1", relation: automated_partial}, {sc: "1.3.1", relation: related}]
+    <<: *defaults
+
+  - id: FORM-05
+    name: Entered data preserved after error
+    category: FORM
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Valid test values entered before a simulated error remain after the error is shown.
+    barrier: Retyping is costly, especially for people with motor or cognitive disabilities.
+    applicability: {condition: FORM-03 produced client-side errors with other fields filled., not_applicable_when: Not tested.}
+    detectors:
+      runtime: [{id: rt.form_error, status: implemented, note: "obviously fake test values (Test User, test@example.invalid)"}]
+    decision_rules:
+      availability: {present: "values retained", not_found_in_scope: "values cleared"}
+      verification: {pass: "all filled values retained", partial: "some", fail: "none", not_tested: "server round-trip needed (blocked by safety policy)"}
+    evidence_required: [field values before/after]
+    automation_limitations: Only client-side validation paths.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: FORM-06
+    name: Input purpose (autocomplete)
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Fields collecting information about the user carry valid autocomplete tokens.
+    barrier: Without autofill, users with motor/cognitive impairments must type everything.
+    applicability: {condition: "Personal-information fields detected (type/name/id/label cues)", not_applicable_when: "None."}
+    detectors:
+      static: [{id: st.autocomplete, status: implemented}]
+      runtime: [{id: rt.axe, status: implemented, rules: [autocomplete-valid]}, {id: rt.dom_snapshot, status: implemented}]
+    decision_rules:
+      availability: {present: "autocomplete tokens on personal fields", not_found_in_scope: "none", not_applicable: "no personal fields"}
+      verification: {pass: "all detected personal fields have a valid token and no axe violation", partial: "some", fail: "none or axe violation", not_tested: "not rendered"}
+    evidence_required: [fields, tokens]
+    automation_limitations: Field-purpose detection is heuristic.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "1.3.5", relation: automated_partial}]
+    <<: *defaults
+
+  - id: FORM-07
+    name: Redundant entry avoided
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: In multi-step processes, previously entered information is auto-populated or selectable.
+    barrier: Re-entering data increases errors and abandonment.
+    applicability: {condition: Multi-step process defined in metadata journeys., not_applicable_when: None defined.}
+    detectors:
+      runtime: [{id: manual, status: manual_only}]
+    decision_rules:
+      availability: {unknown: "Not automatically observable.", not_applicable: "no multi-step journeys"}
+      verification: {not_tested: "Always (human review)."}
+    evidence_required: [reviewer notes]
+    automation_limitations: Requires completing processes, which the tool never does on real services.
+    manual_review: {required: true, instructions: "Walk the multi-step process in a test environment."}
+    wcag: [{sc: "3.3.7", relation: manual}]
+    <<: *defaults
+
+  - id: FORM-08
+    name: Accessible authentication (paste / password manager)
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Login fields allow paste and password managers (no paste blocking, autocomplete not off, username/current-password tokens) and do not rely on a cognitive test without alternative.
+    barrier: Memorising/transcribing credentials excludes many users.
+    applicability: {condition: Password field on a sampled page., not_applicable_when: None.}
+    detectors:
+      static: [{id: st.paste_block, status: implemented}]
+      runtime: [{id: rt.auth_form, status: implemented, note: "synthetic paste event defaultPrevented?; autocomplete tokens; captcha presence"}]
+    decision_rules:
+      availability: {present: "password field allows paste", not_found_in_scope: "paste blocked", not_applicable: "no password field"}
+      verification: {pass: "paste allowed, password manager hints not disabled, no CAPTCHA without alternative", partial: "autocomplete=off or CAPTCHA present", fail: "paste blocked", not_tested: "not rendered"}
+    evidence_required: [fields, events]
+    automation_limitations: Never submits credentials.
+    manual_review: {required: false, instructions: ""}
+    wcag: [{sc: "3.3.8", relation: automated_partial}]
+    <<: *defaults
+
+  - id: FORM-09
+    name: Timeout warning / extension
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Time limits are announced and extendable; no automatic refresh/redirect.
+    barrier: Users who need more time lose their work.
+    applicability: {condition: "Time limit observed (meta refresh, timeout text, session timer code).", not_applicable_when: "None observed."}
+    detectors:
+      static: [{id: st.timeout, status: implemented}]
+      runtime: [{id: rt.axe, status: implemented, rules: [meta-refresh]}, {id: rt.keywords, status: implemented}]
+    decision_rules:
+      availability: {present: "warning/extension mechanism observed", not_found_in_scope: "time limit without warning cue", not_applicable: "no time limit observed"}
+      verification: {fail: "axe meta-refresh violation", not_tested: "otherwise (long sessions are not run)"}
+    evidence_required: [meta tag, text]
+    automation_limitations: Session timeouts are not waited for.
+    manual_review: {required: true, instructions: "Test timeouts in an authorized environment."}
+    wcag: [{sc: "2.2.1", relation: automated_partial}]
+    <<: *defaults
+
+  - id: FORM-10
+    name: Save and resume for long processes
+    category: FORM
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Long applications offer save-draft / continue-later.
+    barrier: Users with limited time, connectivity or support cannot finish in one sitting.
+    applicability: {condition: "metadata long_process true or a journey flagged long.", not_applicable_when: "metadata long_process false; unknown otherwise (result descriptive)."}
+    detectors:
+      static: [{id: st.save_resume, status: implemented}]
+      runtime: [{id: rt.keywords, status: implemented}]
+    decision_rules:
+      availability: {present: "save/resume cue observed", not_found_in_scope: "none", not_applicable: "long_process false"}
+      verification: {not_tested: "Always (human review)."}
+    evidence_required: [cue]
+    automation_limitations: Heuristic.
+    manual_review: {required: true, instructions: "Verify a draft can be resumed."}
+    wcag: []
+    <<: *defaults
+
+  - id: FORM-11
+    name: Plain-language proxy measures
+    category: FORM
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: subject_presence
+    definition: "Clearly named proxies only: mean sentence length (words) and share of words with >= 7 letters (Latin script) / mean sentence length for other scripts."
+    barrier: Complex language excludes people with cognitive disabilities and low literacy.
+    applicability: {condition: Visible text >= 100 words., not_applicable_when: Less text.}
+    detectors:
+      runtime: [{id: rt.text_metrics, status: implemented}]
+    decision_rules:
+      availability: {present: "text measured", not_applicable: "too little text"}
+      verification: {not_tested: "Always; plain language requires human judgement."}
+    evidence_required: [metrics]
+    automation_limitations: Proxies do not measure comprehension.
+    manual_review: {required: true, instructions: "Rate instructions for plain language."}
+    wcag: [{sc: "3.1.5", relation: related, note: "AAA"}]
+    <<: *defaults
+
+  - id: FORM-12
+    name: Unfamiliar terminology proxy (unexpanded abbreviations)
+    category: FORM
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: subject_presence
+    definition: Count of 2-6 letter all-caps abbreviations without <abbr title> or nearby parenthetical expansion.
+    barrier: Jargon blocks understanding.
+    applicability: {condition: Visible text present., not_applicable_when: No text.}
+    detectors:
+      runtime: [{id: rt.text_metrics, status: implemented}]
+    decision_rules:
+      availability: {present: "text measured"}
+      verification: {not_tested: "Always (human judgement)."}
+    evidence_required: [abbreviation list]
+    automation_limitations: Proxy only.
+    manual_review: {required: true, instructions: "Judge whether terminology is explained."}
+    wcag: [{sc: "3.1.4", relation: related, note: "AAA"}]
+    <<: *defaults
+
+  - id: FORM-13
+    name: User control over irreversible actions
+    category: FORM
+    label: wcag_related
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Legal, financial or data-changing submissions are reversible, checked, or confirmed.
+    barrier: Mistaken submissions harm users.
+    applicability: {condition: Transactions in metadata journeys., not_applicable_when: None.}
+    detectors:
+      static: [{id: manual, status: manual_only}]
+    decision_rules:
+      availability: {unknown: "Not automatically observable.", not_applicable: "no transactions"}
+      verification: {not_tested: "Always (human review)."}
+    evidence_required: [reviewer notes]
+    automation_limitations: The tool never performs submissions on real services.
+    manual_review: {required: true, instructions: "Check review/confirm steps in a test environment."}
+    wcag: [{sc: "3.3.4", relation: manual}]
+    <<: *defaults
+
+  # --------------------------------------------------------------- RESOURCES
+  - id: RES-01
+    name: Page weight and standardized load
+    category: RES
+    label: ux_research_indicator
+    requirement_level: descriptive
+    availability_semantics: subject_presence
+    definition: Transferred bytes, request count, load-event time and LCP under the configured throttled cold-load profile.
+    barrier: Heavy pages exclude users on low bandwidth or limited data.
+    applicability: {condition: Page loaded., not_applicable_when: Declared non-web project.}
+    detectors:
+      runtime: [{id: rt.load_measure, status: implemented}]
+    decision_rules:
+      availability: {present: measured.}
+      verification: {pass: "all configured study thresholds met", fail: "any exceeded", not_tested: "no thresholds configured (default)"}
+    evidence_required: [measurements]
+    automation_limitations: Single cold load per page; network variance.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    <<: *defaults
+
+  - id: RES-02
+    name: Offline / low-bandwidth support
+    category: RES
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Service worker or offline page; reloading while offline still renders content.
+    barrier: Intermittent connectivity blocks completion.
+    applicability: {condition: "metadata offline_relevant true OR PWA indicators present; otherwise descriptive.", not_applicable_when: "metadata offline_relevant false."}
+    detectors:
+      static: [{id: st.service_worker, status: implemented}]
+      runtime: [{id: rt.offline, status: implemented}]
+    decision_rules:
+      availability: {present: "service worker registered or manifest + SW in source", not_found_in_scope: "none", not_applicable: "offline_relevant false"}
+      verification: {pass: "offline reload renders page content", fail: "offline reload shows browser error", not_tested: "no service worker"}
+    evidence_required: [registration, offline screenshot]
+    automation_limitations: Only the homepage is tested offline.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    absence_interpretation: Not a universal requirement.
+    <<: *defaults
+
+  # ------------------------------------------------------------------- TRUST
+  - id: TRUST-01
+    name: Eligibility information disclosed
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Public pages state who is eligible for the service.
+    barrier: Users cannot tell whether to apply.
+    applicability: {condition: "Service-delivery interface (interface_type service_ui or metadata).", not_applicable_when: "Declared non-service interfaces (documentation/informational only)."}
+    detectors:
+      runtime: [{id: rt.keywords, status: implemented}]
+    decision_rules:
+      availability: {present: "cue in link/heading text on sampled pages", not_found_in_scope: "none"}
+      verification: {not_tested: "Always (human review of content)."}
+    evidence_required: [cue, page]
+    automation_limitations: Keyword cues only.
+    manual_review: {required: true, instructions: "Confirm eligibility is explained."}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-02
+    name: Required documents disclosed
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Public pages list documents required to apply.
+    barrier: Users start and fail for lack of documents.
+    applicability: {condition: Service-delivery interface., not_applicable_when: Declared non-service.}
+    detectors: {runtime: [{id: rt.keywords, status: implemented}]}
+    decision_rules:
+      availability: {present: cue found., not_found_in_scope: none.}
+      verification: {not_tested: Always.}
+    evidence_required: [cue]
+    automation_limitations: Keyword cues only.
+    manual_review: {required: true, instructions: "Confirm document list."}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-03
+    name: Costs/fees disclosed
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Public pages state fees or that the service is free.
+    barrier: Unknown costs deter applicants.
+    applicability: {condition: Service-delivery interface., not_applicable_when: Declared non-service.}
+    detectors: {runtime: [{id: rt.keywords, status: implemented}]}
+    decision_rules:
+      availability: {present: cue found., not_found_in_scope: none.}
+      verification: {not_tested: Always.}
+    evidence_required: [cue]
+    automation_limitations: Keyword cues only.
+    manual_review: {required: true, instructions: "Confirm fee information."}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-04
+    name: Process steps disclosed
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: Public pages explain how to apply / process steps.
+    barrier: Users cannot anticipate the process.
+    applicability: {condition: Service-delivery interface., not_applicable_when: Declared non-service.}
+    detectors: {runtime: [{id: rt.keywords, status: implemented}]}
+    decision_rules:
+      availability: {present: cue found., not_found_in_scope: none.}
+      verification: {not_tested: Always.}
+    evidence_required: [cue]
+    automation_limitations: Keyword cues only.
+    manual_review: {required: true, instructions: "Confirm process description."}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-05
+    name: Privacy information reachable
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: A privacy notice link is present and its target loads. Presence is NOT evidence of privacy protection.
+    barrier: Users cannot learn how their data is used.
+    applicability: {condition: Web UI rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.trust_links, status: implemented, note: "heuristic keyword in templates"}]
+      runtime: [{id: rt.keywords, status: implemented}, {id: rt.link_check, status: implemented}]
+    decision_rules:
+      availability: {present: "privacy link found", not_found_in_scope: "none"}
+      verification: {pass: "target < 400", fail: "target >= 400 (not 401/403)", not_tested: "not checked"}
+    evidence_required: [link, status]
+    automation_limitations: Content not evaluated.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-06
+    name: Permission requests explained
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_check
+    availability_semantics: implementation
+    definition: Requests for geolocation, camera/microphone or notifications are preceded by an explanation; requests on page load without user action are recorded.
+    barrier: Unexplained permission prompts erode trust and are declined.
+    applicability: {condition: "Permission API invoked on sampled pages or used in first-party source.", not_applicable_when: "None observed."}
+    detectors:
+      runtime: [{id: rt.permissions, status: implemented, note: "init-script instrumentation; permissions denied by default"}]
+    decision_rules:
+      availability: {present: "permission request observed (subject)", not_applicable: "none"}
+      verification: {fail: "request issued on load before any user interaction", not_tested: "otherwise (explanation quality is human-judged)"}
+    evidence_required: [API, page, timing]
+    automation_limitations: Only automatic requests on load are observable without interaction.
+    manual_review: {required: true, instructions: "Check explanation text before prompts."}
+    wcag: []
+    <<: *defaults
+
+  - id: TRUST-07
+    name: Accessibility statement reachable
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: An accessibility statement/help page link is present and loads. NOT evidence of accessibility.
+    barrier: Users cannot report barriers or find alternatives.
+    applicability: {condition: Web UI rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.trust_links, status: implemented}]
+      runtime: [{id: rt.keywords, status: implemented}, {id: rt.link_check, status: implemented}]
+    decision_rules:
+      availability: {present: link found., not_found_in_scope: none.}
+      verification: {pass: "target < 400", fail: "target >= 400 (not 401/403)", not_tested: "not checked"}
+    evidence_required: [link, status]
+    automation_limitations: Content not evaluated.
+    manual_review: {required: false, instructions: ""}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+  - id: TRUST-08
+    name: Grievance/complaint channel disclosed
+    category: TRUST
+    label: ux_research_indicator
+    requirement_level: conditional_indicator
+    availability_semantics: implementation
+    definition: A grievance, complaint or redress channel is linked and loads.
+    barrier: Users cannot seek redress.
+    applicability: {condition: Web UI rendered., not_applicable_when: Declared non-web project.}
+    detectors:
+      static: [{id: st.trust_links, status: implemented}]
+      runtime: [{id: rt.keywords, status: implemented}, {id: rt.link_check, status: implemented}]
+    decision_rules:
+      availability: {present: link found., not_found_in_scope: none.}
+      verification: {pass: "target < 400", fail: "target >= 400 (not 401/403)", not_tested: "not checked"}
+    evidence_required: [link, status]
+    automation_limitations: Keyword cues.
+    manual_review: {required: true, instructions: "Confirm it is a grievance channel."}
+    wcag: []
+    aggregation: {availability: any_present, verification: mixed_is_partial, rollup: rollup_any_web}
+    min_coverage: {runtime_pages: 1}
+    universal_requirement: false
+
+human_only_checks:
+  - {id: HUMAN-SR, name: Screen-reader usability of critical journeys, note: "Never inferred from automated results."}
+  - {id: HUMAN-TQ, name: Translation quality, note: "LANG-02/06 only measure switching and unchanged text."}
+  - {id: HUMAN-PL, name: Plain language, note: "FORM-11 proxies are not judgements."}
+  - {id: HUMAN-NAV, name: Intuitive navigation, note: "No automated label implies ease of navigation."}

@@ -1,0 +1,5 @@
+[project]
+name = "fixture-cli-tool"
+version = "0.1.0"
+description = "FIXTURE: command-line tool without a web UI"
+license = {text = "MIT"}

@@ -1,0 +1,2 @@
+[console_scripts]
+dpi-audit = dpi_audit.cli:main

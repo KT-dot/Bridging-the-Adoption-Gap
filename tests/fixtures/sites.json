@@ -1,0 +1,11 @@
+[
+  {"name": "lang-working (service UI built from repos/i18n_app)", "path": "repos/i18n_app/public", "port_offset": 0},
+  {"name": "lang-partial", "path": "sites/lang_partial", "port_offset": 1},
+  {"name": "inaccessible-nav", "path": "sites/inaccessible_nav", "port_offset": 2},
+  {"name": "focus-trap", "path": "sites/focus_trap", "port_offset": 3},
+  {"name": "forms-unlabeled", "path": "sites/forms_unlabeled", "port_offset": 4},
+  {"name": "contrast-fail", "path": "sites/contrast_fail", "port_offset": 5},
+  {"name": "blocked-robots", "path": "sites/blocked_robots", "port_offset": 6},
+  {"name": "blocked-render", "path": "sites/blocked_render", "port_offset": 7},
+  {"name": "info-site", "path": "sites/info_site", "port_offset": 8}
+]

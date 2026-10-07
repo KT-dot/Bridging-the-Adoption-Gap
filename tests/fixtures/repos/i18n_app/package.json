@@ -1,0 +1,7 @@
+{
+ "name": "fixture-i18n-app",
+ "version": "1.0.0",
+ "private": true,
+ "description": "FIXTURE: working language switcher (dpi-audit test data)",
+ "license": "MIT"
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "original_path": "config/default.yaml",
+    "snapshot": "default_config.yaml",
+    "sha256": "5501567b11cc42bd29cceb1967103fe7636dfffefb4c5a9087a66f3b2e435560"
+  },
+  {
+    "original_path": "docs/methodology.md",
+    "snapshot": "report_methodology.md",
+    "sha256": "91f947e2454591bf223404e69844a7fff7c3e22ff386c56b7edc5c29f30ff56a"
+  },
+  {
+    "original_path": "pyproject.toml",
+    "snapshot": "pyproject.toml",
+    "sha256": "267ff64f93f139e480b4e3242d9ebef6130f7d3e39c1c3c0f9b5fb213a096311"
+  },
+  {
+    "original_path": "requirements.lock",
+    "snapshot": "requirements.lock",
+    "sha256": "e2856ff6b5ab07bb657f3a34fd9df3fda91e5d585d6c3f607386dac544341a92"
+  },
+  {
+    "original_path": "package-lock.json",
+    "snapshot": "package-lock.json",
+    "sha256": "f1c3b7346869e33230652e63f3246e061ce18e128291b92269eb7a7e9c592842"
+  },
+  {
+    "original_path": "scripts/finalize_audit_run.py",
+    "snapshot": "finalize_audit_run.py",
+    "sha256": "2c28d4672667310d4f9825de67337fdd65ad4d827ad0c07c200e779e45322396"
+  },
+  {
+    "original_path": "scripts/pilot_stall_watchdog.py",
+    "snapshot": "pilot_stall_watchdog.py",
+    "sha256": "9ff2d4bf6370918c3cbc04af3b865fa03854dc8097c82833558b4a716f215c28"
+  }
+]

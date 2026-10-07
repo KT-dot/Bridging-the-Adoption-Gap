@@ -1,0 +1,10 @@
+{
+ "name": "fixture-unused-translations",
+ "version": "0.1.0",
+ "private": true,
+ "license": "MIT",
+ "description": "FIXTURE: translation files and an i18n dependency that the code never uses",
+ "dependencies": {
+  "i18next": "23.0.0"
+ }
+}

@@ -1,0 +1,11 @@
+# Derived from list.txt; local checkouts; original input is unchanged.
+in-bhashini-ulca | /home/divyansh/thapa/paper_work/repositories/in-bhashini-ulca | https://meity-origin.ulcacontrib.org/ulca/dashboard | data_portal
+in-cmd-koha | /home/divyansh/thapa/paper_work/repositories/in-cmd-koha | https://opac.cmd.kerala.gov.in/ | service_ui
+in-haryana-wordpress | /home/divyansh/thapa/paper_work/repositories/in-haryana-wordpress | https://haryana.gov.in/ | public_information_site
+in-icar-ojs | /home/divyansh/thapa/paper_work/repositories/in-icar-ojs | https://epubs.icar.org.in/index.php/IJAgS | service_ui
+in-iitm-moodle | /home/divyansh/thapa/paper_work/repositories/in-iitm-moodle | https://courses.iitm.ac.in/ | service_ui
+in-incois-erddap | /home/divyansh/thapa/paper_work/repositories/in-incois-erddap | https://erddap.incois.gov.in/erddap/index.html | data_portal
+in-inflibnet-ir-dspace | /home/divyansh/thapa/paper_work/repositories/in-inflibnet-ir-dspace | https://ir.inflibnet.ac.in/ | service_ui
+in-mospi-microdata | /home/divyansh/thapa/paper_work/repositories/in-mospi-microdata | https://microdata.gov.in/NADA/index.php/catalog | data_portal
+in-peso-drupal | /home/divyansh/thapa/paper_work/repositories/in-peso-drupal | https://www.peso.gov.in/web/en | public_information_site
+in-tifr-indico | /home/divyansh/thapa/paper_work/repositories/in-tifr-indico | https://scitalks.tifr.res.in/category/11 | service_ui

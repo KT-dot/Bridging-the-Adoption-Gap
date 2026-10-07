@@ -1,0 +1,8 @@
+pyproject.toml
+src/dpi_audit/__init__.py
+src/dpi_audit.egg-info/PKG-INFO
+src/dpi_audit.egg-info/SOURCES.txt
+src/dpi_audit.egg-info/dependency_links.txt
+src/dpi_audit.egg-info/entry_points.txt
+src/dpi_audit.egg-info/requires.txt
+src/dpi_audit.egg-info/top_level.txt

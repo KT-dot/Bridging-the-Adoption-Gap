@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpi-audit"
+version = "0.1.0"
+description = "Reproducible batch auditing of potential accessibility and inclusive-UX barriers in DPI/DPG interfaces"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+dependencies = [
+  "playwright==1.63.0",
+  "PyYAML==6.0.3",
+  "Jinja2==3.1.6",
+  "beautifulsoup4==4.14.3",
+  "lxml==6.1.3",
+  "tinycss2==1.5.1",
+  "Babel==2.18.0",
+  "pillow==12.3.0",
+  "tree-sitter==0.25.2",
+  "tree-sitter-javascript==0.25.0",
+  "tree-sitter-typescript==0.23.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest==9.1.1"]
+
+[project.scripts]
+dpi-audit = "dpi_audit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dpi_audit = ["runtime/js/*.js", "report/templates/*", "data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "runtime: needs Playwright Chromium (skipped automatically when unavailable)",
+  "container: needs docker or podman",
+]

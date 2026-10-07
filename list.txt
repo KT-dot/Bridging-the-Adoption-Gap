@@ -1,0 +1,12 @@
+# India only; one primary government interface per distinct codebase family.
+# project_id | repository_url | deployment_url | interface_type
+in-bhashini-ulca | https://github.com/bhashini-dibd/ulca | https://meity-origin.ulcacontrib.org/ulca/dashboard | data_portal
+in-cmd-koha | https://github.com/Koha-Community/Koha | https://opac.cmd.kerala.gov.in/ | service_ui
+in-haryana-wordpress | https://github.com/WordPress/WordPress | https://haryana.gov.in/ | public_information_site
+in-icar-ojs | https://github.com/pkp/ojs | https://epubs.icar.org.in/index.php/IJAgS | service_ui
+in-iitm-moodle | https://github.com/moodle/moodle | https://courses.iitm.ac.in/ | service_ui
+in-incois-erddap | https://github.com/ERDDAP/erddap | https://erddap.incois.gov.in/erddap/index.html | data_portal
+in-inflibnet-ir-dspace | https://github.com/DSpace/dspace-angular | https://ir.inflibnet.ac.in/ | service_ui
+in-mospi-microdata | https://github.com/ihsn/nada | https://microdata.gov.in/NADA/index.php/catalog | data_portal
+in-peso-drupal | https://github.com/drupal/drupal | https://www.peso.gov.in/web/en | public_information_site
+in-tifr-indico | https://github.com/indico/indico | https://scitalks.tifr.res.in/category/11/ | service_ui

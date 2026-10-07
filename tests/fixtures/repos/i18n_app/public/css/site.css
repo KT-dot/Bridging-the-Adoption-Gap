@@ -1,0 +1,22 @@
+:root { --fg: #1a1a1a; --bg: #ffffff; --link: #0b4f9c; --focus: #c2410c; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 1rem/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+header, main, footer, .breadcrumb { max-width: 60rem; margin: 0 auto; padding: 1rem; }
+a { color: var(--link); }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, main:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+.skip { position: absolute; left: -999px; top: 0; background: #fff; padding: .5rem; }
+.skip:focus { left: 1rem; }
+nav ul, footer ul, .breadcrumb ol { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; }
+nav a, footer a, .breadcrumb a { display: inline-block; padding: .5rem .25rem; min-height: 44px; }
+img { max-width: 100%; height: auto; }
+input, textarea, select { font: inherit; border: 2px solid #555; padding: .5rem; min-height: 44px; max-width: 100%; }
+button { font: inherit; padding: .5rem 1rem; min-height: 44px; border: 2px solid #0b4f9c; background: #0b4f9c; color: #fff; }
+.field { margin: 1rem 0; display: flex; flex-direction: column; }
+.error { color: #a40000; font-weight: 600; }
+[role=dialog] { border: 2px solid #333; padding: 1rem; background: #fff; max-width: 30rem; }
+.spinner { animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+[dir=rtl] nav ul { flex-direction: row-reverse; }

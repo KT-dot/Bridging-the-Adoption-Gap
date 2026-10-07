@@ -1,0 +1,5 @@
+fixture-working | ../../tests/fixtures/repos/i18n_app | http://127.0.0.1:19700/ | service_ui
+fixture-partial | ../../tests/fixtures/sites/lang_partial | http://127.0.0.1:19701/ | service_ui
+fixture-forms | ../../tests/fixtures/sites/forms_unlabeled | http://127.0.0.1:19704/ | service_ui
+fixture-contrast | ../../tests/fixtures/sites/contrast_fail | http://127.0.0.1:19705/ | service_ui
+fixture-robots | ../../tests/fixtures/sites/blocked_robots | http://127.0.0.1:19706/ | service_ui

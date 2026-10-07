@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Contrast Fixture – News</title>
+<style>
+body { font: 14px/1.4 Arial; color: #9a9a9a; background: #ffffff; margin: 0; }
+.wrap { width: 1100px; margin: 0 auto; }
+a { color: #5a7fa8; text-decoration: none; }
+*:focus { outline: none; }
+input { border: 1px solid #f0f0f0; }
+.icons a { display: inline-block; width: 16px; height: 16px; overflow: hidden; font-size: 10px; margin-right: 2px; }
+.box { height: 40px; overflow: hidden; }
+.ticker { animation: move 6s linear infinite; }
+@keyframes move { from { transform: translateX(0); } to { transform: translateX(-100px); } }
+nav ul { display: flex; list-style: none; padding: 0; gap: 8px; }
+</style></head>
+<body>
+<div class="wrap">
+<header><nav aria-label="Main"><ul><li><a href="index.html">Home</a></li><li><a href="news.html">News</a></li><li><a href="about.html">About</a></li></ul></nav>
+<p class="icons"><a href="news.html" aria-label="RSS">r</a><a href="about.html" aria-label="Info">i</a></p></header>
+<main>
+<h1>News</h1>
+<p>Light grey text on a white background is hard to read. Read the <a href="news.html">latest news</a> in this paragraph, where the link differs only by colour.</p>
+<div class="box"><p>This fixed-height box clips its text when the spacing or the text size increases, because overflow is hidden and the height is fixed in pixels which does not grow.</p></div>
+<marquee>Important announcement scrolling text</marquee>
+<p class="ticker">Moving ticker content without a pause control</p>
+<form action="/subscribe" method="get"><label for="q">Search news</label><input id="q" name="q" type="search"><button type="submit">Go</button></form>
+</main>
+</div>
+</body></html>

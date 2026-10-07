@@ -1,0 +1,10 @@
+schema_version: 1
+projects:
+  fixture-working:
+    expected_languages:
+    - en
+    - hi
+  fixture-partial:
+    expected_languages:
+    - en
+    - hi

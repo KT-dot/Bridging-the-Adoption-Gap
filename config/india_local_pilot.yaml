@@ -1,0 +1,11 @@
+# All ten accepted Indian interfaces; draft instrument, explicitly pilot-labelled.
+# Deep-merged with config/default.yaml. Local checkouts are inspected read-only.
+run:
+  label: pilot
+  mode: hybrid
+  workers: 2
+acquisition:
+  allow_remote_clone: false
+runtime:
+  max_pages: 15
+  user_agent_suffix: "DPI-Audit/0.1 (+accessibility research; contact: kartik.thapa@research.iiit.ac.in)"

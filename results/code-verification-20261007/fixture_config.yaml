@@ -1,0 +1,17 @@
+run:
+  label: fixture
+  workers: 2
+  project_timeout_s: 240
+acquisition:
+  allow_remote_clone: false
+runtime:
+  max_pages: 1
+  interface_budget_s: 120
+  navigation_timeout_s: 10
+  per_host_min_delay_s: 0.05
+  user_agent_suffix: DPI-Audit local software verification
+  states:
+    load_measure:
+      enabled: false
+    offline:
+      enabled: false

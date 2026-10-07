@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Department Portal</title>
+<style>
+body { font: 14px Arial; margin: 0; }
+.menu { display: flex; background: #333; }
+.menu .item { color: #fff; padding: 8px 12px; cursor: pointer; }
+.big { font-size: 28px; font-weight: bold; margin: 12px 0; }
+.carousel .slide { animation: slide 4s linear infinite; }
+@keyframes slide { from { transform: translateX(0); } to { transform: translateX(40px); } }
+</style></head>
+<body>
+<div class="menu">
+<div class="item" onclick="location.href='index.html'">Home</div>
+<div class="item" onclick="location.href='notices.html'">Notices</div>
+<div class="item" onclick="location.href='downloads.html'">Downloads</div>
+<div class="item" role="button" onclick="location.href='contact.html'">Contact</div>
+</div>
+<div class="banner"><img src="img/banner.svg" width="600" height="80"></div>
+<div class="big">Welcome to the department portal</div>
+<div>यह विभाग का आधिकारिक पोर्टल है। यहां सभी सूचनाएं और परिपत्र उपलब्ध हैं। नागरिक सेवाओं के लिए नीचे दिए गए लिंक का उपयोग करें। सभी सूचनाएं हिंदी और अंग्रेजी में प्रकाशित की जाती हैं।</div>
+<div>Latest circulars are published every week. For older circulars <a href="notices.html">click here</a>. For forms <a href="downloads.html">click here</a>.</div>
+<div><a href="missing-page.html">Annual report</a> <a href="notices.html"><img src="img/arrow.svg" width="12" height="12"></a></div>
+<div class="carousel slider"><div class="slide">Slide one</div></div>
+<video src="media/intro.mp4" width="320" height="180" controls></video>
+<div class="foot"><a href="oops.html">Sitemap</a></div>
+</body></html>

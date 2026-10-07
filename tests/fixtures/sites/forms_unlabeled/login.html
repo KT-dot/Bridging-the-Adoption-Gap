@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="300; url=login.html?expired=1">
+<title>Login – Forms Fixture</title></head>
+<body>
+<header><nav aria-label="Main"><ul><li><a href="index.html">Register</a></li><li><a href="login.html">Login</a></li><li><a href="help.html">Help</a></li></ul></nav></header>
+<main>
+<h1>Login</h1>
+<form id="login" action="/login" method="post">
+  <label for="user">User ID</label>
+  <input id="user" name="user" type="text" autocomplete="off" required>
+  <label for="pw">Password</label>
+  <input id="pw" name="pw" type="password" autocomplete="off" onpaste="return false" required>
+  <img src="captcha.svg" id="captcha-img" alt="captcha" width="120" height="40">
+  <label for="captcha">Enter the characters shown</label>
+  <input id="captcha" name="captcha" type="text" required>
+  <button type="submit">Login</button>
+</form>
+</main>
+</body></html>

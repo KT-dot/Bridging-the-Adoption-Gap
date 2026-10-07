@@ -1,0 +1,49 @@
+{% set inv = r.inventory %}
+# Project report: {{ inv.project_id }}
+
+> Run label: **{{ label }}**. Labels describe potential interface barriers within the stated scope.
+> They are not WCAG conformance claims, screen-reader compatibility claims, or evidence of adoption.
+
+| | |
+|---|---|
+| Audit status | {{ inv.status }} ({{ inv.mode }} mode) |
+| UI applicability | {{ inv.ui_applicability }} — {{ inv.ui_applicability_reason }} |
+| Codebook | {{ inv.codebook_version }} (rules {{ inv.rule_version }}) |
+| Config hash | {{ inv.config_hash }} |
+| Deployment ↔ repository | {{ (inv.deployment_repository_relationship or {}).get('status', 'unknown') }}{% if (inv.deployment_repository_relationship or {}).get('tool_check') %} — {{ inv.deployment_repository_relationship.tool_check }}{% endif %} |
+| Started | {{ inv.started }} |
+
+## Interfaces
+
+| Interface | Type | Location | Status | Coverage / reason |
+|---|---|---|---|---|
+{% for i in inv.interfaces %}
+| `{{ i.interface_id.split('::')[-1] }}` | {{ i.interface_type }} | {{ i.location.url or i.location.path }} | {{ i.status }} | {% if i.kind == 'source' %}{% if i.commit %}commit `{{ i.commit[:12] }}`{% if i.dirty %} (dirty){% endif %}; {% endif %}{{ (i.static_coverage or {}).get('files_inspected', '–') }} files inspected{% if i.coverage_note %}; {{ i.coverage_note }}{% endif %}{% else %}{{ i.coverage_note or i.reason or '' }}{% endif %} |
+{% endfor %}
+
+{% if inv.warnings %}
+**Input warnings:** {{ inv.warnings | join('; ') }}
+{% endif %}
+
+## Project-level features
+
+Availability and verification are separate. `method` shows which evidence produced the label.
+
+{% for cat, cname in cb.categories.items() %}
+### {{ cat }} — {{ cname }}
+
+| Feature | Availability | Verification | Units pass/partial/fail/tested | Method | Grade | Review | Rationale |
+|---|---|---|---|---|---|---|---|
+{% for f in r.features if f.category == cat %}
+| {{ f.feature_id }} {{ f.feature_name }} | {{ f.availability }} | {{ f.verification }} | {{ f.units_pass }}/{{ f.units_partial }}/{{ f.units_fail }}/{{ f.units_tested }} | {{ f.method }} | {{ f.evidence_grade }} | {{ 'yes' if f.manual_review_flag else '' }} | {{ (f.rationale or f.coverage_limits or '') | replace('|', '/') | truncate(260) }} |
+{% endfor %}
+{% endfor %}
+
+## Evidence
+
+* Raw observations: `observations.jsonl` (one line per page x viewport x state x feature x check).
+* Pages and their fate (sampled / skipped / blocked / failed): `pages.json`.
+* Screenshots, gzip axe-core results and focus clips: `evidence/`.
+* Interface-level rows: `report.json` → `interface_features`.
+
+Generated {{ r.generated }}.

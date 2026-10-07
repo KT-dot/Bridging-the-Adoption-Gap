@@ -1,0 +1,77 @@
+{
+  "created_utc": "2026-10-06T21:20:35.635404+00:00",
+  "original_list_sha256": "378a54282fdf988669587f95ec2fadbc737b757af7f5e2763f2b27774795e14a",
+  "status": "pilot; draft codebook; no human validation",
+  "projects": [
+    {
+      "project_id": "in-bhashini-ulca",
+      "repository_url": "https://github.com/bhashini-dibd/ulca",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-bhashini-ulca",
+      "commit": "2d832e2c212e8956a9e0680b6e7e0eac60dde3fb",
+      "dirty": false
+    },
+    {
+      "project_id": "in-cmd-koha",
+      "repository_url": "https://github.com/Koha-Community/Koha",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-cmd-koha",
+      "commit": "a6676a630821debefd92fac278b0c9ce57cd47da",
+      "dirty": false
+    },
+    {
+      "project_id": "in-haryana-wordpress",
+      "repository_url": "https://github.com/WordPress/WordPress",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-haryana-wordpress",
+      "commit": "bf1e2108bb883105bc2e0d3a96f9ff82b15fb8e2",
+      "dirty": false
+    },
+    {
+      "project_id": "in-icar-ojs",
+      "repository_url": "https://github.com/pkp/ojs",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-icar-ojs",
+      "commit": "4fc0ccc6d70c0bec6d18d34dbffe657f35baa06c",
+      "dirty": false
+    },
+    {
+      "project_id": "in-iitm-moodle",
+      "repository_url": "https://github.com/moodle/moodle",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-iitm-moodle",
+      "commit": "f20534726a59a4b64d168bc4a70fc9518251613e",
+      "dirty": false
+    },
+    {
+      "project_id": "in-incois-erddap",
+      "repository_url": "https://github.com/ERDDAP/erddap",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-incois-erddap",
+      "commit": "775c95f8f12952536c82807b5a7209cd266f948c",
+      "dirty": false
+    },
+    {
+      "project_id": "in-inflibnet-ir-dspace",
+      "repository_url": "https://github.com/DSpace/dspace-angular",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-inflibnet-ir-dspace",
+      "commit": "fab5e09bd25dff51f02ba29877b0e968a4f1e63a",
+      "dirty": false
+    },
+    {
+      "project_id": "in-mospi-microdata",
+      "repository_url": "https://github.com/ihsn/nada",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-mospi-microdata",
+      "commit": "1bd31f72e9b7c6df6799b4ad7edec208c0203f4b",
+      "dirty": false
+    },
+    {
+      "project_id": "in-peso-drupal",
+      "repository_url": "https://github.com/drupal/drupal",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-peso-drupal",
+      "commit": "47430c368bbde0c695d1e432a28139521b56616f",
+      "dirty": false
+    },
+    {
+      "project_id": "in-tifr-indico",
+      "repository_url": "https://github.com/indico/indico",
+      "local_path": "/home/divyansh/thapa/paper_work/repositories/in-tifr-indico",
+      "commit": "d4436e801ed506cc8e399ff11487644f4ba614ad",
+      "dirty": false
+    }
+  ]
+}

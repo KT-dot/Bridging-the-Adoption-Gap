@@ -1,0 +1,9 @@
+{
+  "name": "dpi-audit-node-assets",
+  "private": true,
+  "description": "Pinned browser-side assets for dpi-audit (axe-core is injected into pages by Playwright)",
+  "license": "MIT",
+  "dependencies": {
+    "axe-core": "4.14.0"
+  }
+}

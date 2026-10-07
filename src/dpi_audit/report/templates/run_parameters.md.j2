@@ -1,0 +1,30 @@
+---
+
+## Appendix: parameters of this run (generated)
+
+* Run label: **{{ label }}**{% if label != 'research' %} — these are NOT research observations.{% endif %}
+
+* Generated: {{ generated }}; projects in report: {{ n_projects }}
+* Input: `{{ m.input.path }}` (sha256 `{{ m.input.sha256[:16] }}…`), {{ m.input.entries }} entries, {{ m.input.projects_total }} projects, {{ m.input.duplicates | length }} duplicate line(s) ignored
+* Mode: {{ m.mode }}; limit: {{ m.limit or 'none' }}
+* Codebook: {{ cb.meta.id }} v{{ cb.version }} (status {{ cb.status }}, content `{{ cb.content_hash[:16] }}`); frozen: {{ fz.frozen }}{% if not fz.frozen %} — {{ fz.reason }}{% endif %}
+
+* Config semantic hash: `{{ m.config.semantic_hash[:16] }}`; code hash `{{ m.code_hash }}`
+* Tool versions: {% for k, v in tool_versions.items() %}{{ k }}={{ v | join(',') }}{% if not loop.last %}; {% endif %}{% endfor %}
+
+### Sampling and budgets
+
+| Setting | Value |
+|---|---|
+| Max pages per interface | {{ cfg.runtime.max_pages }} |
+| Viewports | desktop {{ cfg.runtime.viewports.desktop.width }}x{{ cfg.runtime.viewports.desktop.height }}; mobile {{ cfg.runtime.viewports.mobile.width }}x{{ cfg.runtime.viewports.mobile.height }} (DSF {{ cfg.runtime.viewports.mobile.device_scale_factor }}) |
+| Reflow viewport | {{ cfg.runtime.reflow_viewport.width }}x{{ cfg.runtime.reflow_viewport.height }} |
+| Zoom emulation | {{ cfg.runtime.zoom_emulation.base_width }}x{{ cfg.runtime.zoom_emulation.base_height }} at {{ cfg.runtime.zoom_emulation.factor }}x |
+| Sampling quotas | {% for k, v in cfg.runtime.sampling.items() %}{{ k }}={{ v }} {% endfor %} |
+| States (per-interface caps) | {% for k, v in cfg.runtime.states.items() %}{{ k }}: {{ v }}<br>{% endfor %} |
+| Per-host delay | {{ cfg.runtime.per_host_min_delay_s }} s; robots respected: {{ cfg.runtime.respect_robots }} |
+| Navigation timeout / interface budget | {{ cfg.runtime.navigation_timeout_s }} s / {{ cfg.runtime.interface_budget_s }} s |
+| Load profile | {{ cfg.runtime.load_profile }} |
+| Mutating requests blocked | {{ cfg.runtime.safety.block_mutating_requests }} (allowed hosts: {{ cfg.runtime.safety.allow_mutation_hosts or 'none' }}) |
+| Static limits | max_files={{ cfg.static.max_files }}, max_file_bytes={{ cfg.static.max_file_bytes }} |
+| Study thresholds | {% for k, v in cfg.thresholds.items() %}{{ k }}={{ v }} {% endfor %} |

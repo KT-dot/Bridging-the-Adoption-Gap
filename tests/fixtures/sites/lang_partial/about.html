@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partial Portal – About</title>
+<style>
+body { font: 16px/1.5 sans-serif; margin: 1rem; }
+a:focus { outline: 3px solid #b45309; }
+a.nofocus:focus { outline: none; }
+nav ul { display: flex; gap: 1rem; list-style: none; padding: 0; }
+nav a, .langs a { display: inline-block; padding: 10px 6px; }
+</style></head>
+<body>
+<a href="#maincontent">Skip to main content</a>
+<header>
+<p class="langs"><a href="#" id="to-en" lang="en">English</a> | <a href="#" id="to-hi" lang="hi">हिन्दी</a></p>
+<nav aria-label="Main"><ul>
+<li><a href="index.html" class="t" data-k="home">Home</a></li>
+<li><a href="about.html" class="t" data-k="about">About</a></li>
+<li><a href="schemes.html" class="t" data-k="schemes">Schemes</a></li>
+<li><a href="help.html" class="nofocus">Help</a></li>
+</ul></nav>
+</header>
+<main>
+<h1>About the department</h1><p>The department manages schemes for families and senior citizens.</p>
+</main>
+<footer><p><a href="privacy.html">Privacy</a></p></footer>
+<script>
+// Partial switcher: translates only the navigation labels, never updates <html lang>,
+// and keeps the choice only in memory (lost on navigation or reload).
+var HI = {home: "मुखपृष्ठ", about: "परिचय", schemes: "योजनाएं"};
+document.getElementById("to-hi").addEventListener("click", function (e) {
+  e.preventDefault();
+  document.querySelectorAll(".t").forEach(function (a) { a.textContent = HI[a.dataset.k]; });
+});
+document.getElementById("to-en").addEventListener("click", function (e) { e.preventDefault(); location.reload(); });
+</script>
+</body></html>

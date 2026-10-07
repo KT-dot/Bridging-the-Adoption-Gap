@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registration – Forms Fixture</title>
+<style>
+body { font: 16px/1.5 sans-serif; margin: 1rem; }
+.req { border: 2px solid red; }
+.err { color: red; }
+input { display: block; margin: .5rem 0; padding: .4rem; }
+</style></head>
+<body>
+<header><nav aria-label="Main"><ul><li><a href="index.html">Register</a></li><li><a href="login.html">Login</a></li><li><a href="help.html">Help</a></li></ul></nav></header>
+<main>
+<h1>Register for the scheme</h1>
+<form id="reg" action="/register" method="post" novalidate>
+  <input type="text" name="fullname" placeholder="Full name" class="req" required>
+  <input type="text" name="mobile" placeholder="Mobile (10 digits)" pattern="[0-9]{10}" class="req" required>
+  <input type="text" name="district" placeholder="District">
+  <input type="text" name="aadhaar_last4" maxlength="4">
+  <div id="errs"></div>
+  <button type="submit">Submit</button>
+</form>
+</main>
+<script>
+// Errors shown in red text, not associated with fields, not announced; all fields cleared.
+document.getElementById("reg").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var f = e.target, missing = [];
+  f.querySelectorAll("[required]").forEach(function (i) { if (!i.value) missing.push(i.placeholder); });
+  if (missing.length) {
+    var d = document.createElement("p"); d.className = "err"; d.textContent = "Error: please fill " + missing.join(", ");
+    document.getElementById("errs").appendChild(d);
+    f.reset();
+  }
+});
+</script>
+</body></html>
